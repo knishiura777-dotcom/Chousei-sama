@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>調整様（共有版）</title>
+<title>調整様（完全版）</title>
 <style>
 body{font-family:sans-serif;background:#f5f7fb;padding:20px}
 .panel{background:#fff;padding:16px;margin-bottom:16px;border-radius:10px}
@@ -13,10 +13,11 @@ button{padding:8px 12px;background:#2563eb;color:#fff;border:none;border-radius:
 <body>
 
 <div class="panel">
-<h2>予定</h2>
-<input id="title" placeholder="予定名">
-<input id="location" placeholder="場所">
+<h2>予定情報</h2>
+<input id="title" placeholder="予定名（例：研究打ち合わせ）">
+<input id="location" placeholder="場所 / URL">
 <input id="deadline" type="datetime-local">
+<input id="organizer" placeholder="幹事名">
 <textarea id="desc" placeholder="説明"></textarea>
 </div>
 
@@ -78,6 +79,7 @@ const state={
   title:"",
   location:"",
   deadline:"",
+  organizer:"",
   desc:"",
   candidates:[],
   participants:[],
@@ -109,6 +111,7 @@ function render(){
   title.value=state.title;
   location.value=state.location;
   deadline.value=state.deadline;
+  organizer.value=state.organizer;
   desc.value=state.desc;
 
   cList.innerHTML=state.candidates.map(c=>`<div>${c.date} ${c.time}</div>`).join("");
@@ -172,11 +175,18 @@ function calc(){
   }).sort((a,b)=>b.score-a.score);
 
   if(res.length){
-    result.innerHTML=`${state.title}<br>${res[0].c.date} ${res[0].c.time}`;
+    result.innerHTML=`
+      <strong>${state.title || '予定名未設定'}</strong><br>
+      場所: ${state.location || '未設定'}<br>
+      締切: ${state.deadline || '未設定'}<br>
+      幹事: ${state.organizer || '未設定'}<br><br>
+      👉 最適日: ${res[0].c.date} ${res[0].c.time}
+    `;
   }
 }
 
 addC.onclick=()=>{
+  if(!d.value) return;
   state.candidates.push({id:uid(),date:d.value,time:t.value});
   render(); save();
 };
@@ -189,6 +199,7 @@ addP.onclick=()=>{
 title.oninput=e=>{state.title=e.target.value; save();}
 location.oninput=e=>{state.location=e.target.value; save();}
 deadline.oninput=e=>{state.deadline=e.target.value; save();}
+organizer.oninput=e=>{state.organizer=e.target.value; save();}
 desc.oninput=e=>{state.desc=e.target.value; save();}
 
 load();
