@@ -241,8 +241,7 @@ function ensure(){
     if(!state.responses[p.id]) state.responses[p.id] = {};
     state.candidates.forEach((c, ci) => {
       if(!state.responses[p.id][c.id]){
-        const seed = (pi + ci) % 3;
-        state.responses[p.id][c.id] = seed === 0 ? "ok" : seed === 1 ? "maybe" : "ng";
+        state.responses[p.id][c.id] = "maybe";
       }
     });
     Object.keys(state.responses[p.id]).forEach(cid => {
