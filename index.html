@@ -363,12 +363,37 @@ function renderRanking(){
   ranking.innerHTML = ranked.map((item, index) => `<div class="rank-card ${index===0?'top':''}"><div class="rank-head"><div><strong>${index===0?'👑 第一候補':`候補 ${index+1}`}</strong><div class="small">${esc(item.c.date)} ${esc(item.c.time || '')}</div></div><div class="score">Score ${item.score}</div></div><div class="pills"><span class="pill ok">○ ${item.ok}</span><span class="pill maybe">△ ${item.maybe}</span><span class="pill ng">× ${item.ng}</span></div><div class="rank-reason">重要人物参加可: ${item.importantOk}人。${item.ng >= 2 ? '少し荒れそうです。' : '比較的穏当に決めやすい候補です。'}</div></div>`).join("");
 }
 
+function buildViewerFlavor(item, index){
+  if(index === 0 && item.importantOk > 0){
+    return '第一候補らしく、予定表のセンターを静かに確保しています。忙しい方にも配慮しやすく、まずはこの日から声をかけると角が立ちにくそうです。';
+  }
+  if(index === 0){
+    return '全体のバランスがよく、実務ではかなり優秀です。派手すぎず、でも仕事はできるタイプの候補です。';
+  }
+  if(index === 1 && item.maybe >= item.ok && item.maybe > 0){
+    return '第二候補ですが、まだ伸びしろがあります。あと一声で前に出るタイプなので、予定が揺れている方にはやさしく確認するとよさそうです。';
+  }
+  if(index === 1){
+    return '控えめに見えて、いざという時に頼れる候補です。本命が難しい時の着地先として、かなり品があります。';
+  }
+  if(index === 2 && item.ng >= 2){
+    return '少し向かい風ですが、完全退場には惜しい候補です。参加が難しい方へのひと言を添えると、空気はぐっと柔らかくなります。';
+  }
+  if(index === 2){
+    return '第三候補として静かに待機中です。主役ではないものの、いざという時に場をつなぐ役回りは十分こなせます。';
+  }
+  if(item.ng >= 2){
+    return 'この候補はやや手強めです。ただ、事情のある方を責めずに扱えるなら、代替案として残しておく価値はあります。';
+  }
+  return '無理のある方に配慮を添えながら進めれば、穏当に着地しやすい候補です。';
+}
+
 function renderViewer(){
   const ranked = calc();
   const top = ranked[0];
   viewerHero.innerHTML = `<strong>${esc(state.title || '予定名未設定')}</strong><div class="viewer-meta"><span class="meta-chip">場所: ${esc(state.location || '未設定')}</span><span class="meta-chip">回答締切日時: ${esc(state.deadline || '未設定')}</span><span class="meta-chip">幹事: ${esc(state.organizer || '未設定')}</span></div><div style="font-size:22px;font-weight:800;margin-bottom:8px;">${top ? `第一候補: ${esc(top.c.date)} ${esc(top.c.time || '')}` : '候補日未設定'}</div><div class="small" style="line-height:1.8;">${esc(state.desc || '説明は未入力です。')}</div>`;
 
-  viewerCandidates.innerHTML = ranked.length ? ranked.map((item, index) => `<div class="viewer-candidate ${index===0?'top':''}"><div class="viewer-candidate-head"><div><strong>${index===0?'👑 第一候補':`候補 ${index+1}`}</strong><div class="small">${esc(item.c.date)} ${esc(item.c.time || '')}</div></div><div class="score">Score ${item.score}</div></div><div class="pills"><span class="pill ok">○ ${item.ok}</span><span class="pill maybe">△ ${item.maybe}</span><span class="pill ng">× ${item.ng}</span></div></div>`).join("") : '<div class="small">候補日がありません。</div>';
+  viewerCandidates.innerHTML = ranked.length ? ranked.map((item, index) => `<div class="viewer-candidate ${index===0?'top':''}"><div class="viewer-candidate-head"><div><strong>${index===0?'👑 第一候補':index===1?'🥈 第二候補':index===2?'🥉 第三候補':`候補 ${index+1}`}</strong><div class="small">${esc(item.c.date)} ${esc(item.c.time || '')}</div></div><div class="score">Score ${item.score}</div></div><div class="pills"><span class="pill ok">○ ${item.ok}</span><span class="pill maybe">△ ${item.maybe}</span><span class="pill ng">× ${item.ng}</span></div><div class="viewer-reason">${esc(buildViewerFlavor(item, index))}</div></div>`).join("") : '<div class="small">候補日がありません。</div>';
 
   viewerParticipantSelect.innerHTML = state.participants.map(p => `<option value="${p.id}" ${p.id===viewerSelectedParticipantId?'selected':''}>${esc(p.name || '参加者')}</option>`).join('');
   if(!state.participants.length || !state.candidates.length){ viewerResponseEditor.innerHTML = '<div class="small">参加者と候補日が揃うと回答できます。</div>'; return; }
@@ -459,7 +484,7 @@ async function runAiInsights(){
     required: ['headline','summary','alternatives','cautions']
   };
 
-  const instruction = `あなたは日本語の会議日程調整アシスタントです。候補日を点数順に並べるだけではなく、人間らしい判断理由を短く明快に説明してください。重要人物が参加できる候補、NGが多い候補、代替案として残す価値がある候補を見極めてください。出力は必ずJSONのみ。`;
+  const instruction = `あなたは「調整様」という日本語の会議日程調整アシスタントです。文体は、皮肉ではなくエッジの効いた笑いを少量、相手への気配りを適度に織り交ぜたものにしてください。人を傷つける表現、見下し、嫌味、攻撃性は不可です。クスッとする比喩や軽いユーモアは使ってよいですが、忙しい人や参加できない人への配慮を必ず一言添えてください。候補日を点数順に並べるだけではなく、重要人物が参加できる候補、NGが多い候補、代替案として残す価値がある候補を短く明快に説明してください。headline は少し印象的に、summary は2〜4文で、alternatives.reason は実務に役立つコメントにしてください。出力は必ずJSONのみ。`;
   try{
     const res = await fetch(GEMINI_ENDPOINT, {
       method: 'POST',
