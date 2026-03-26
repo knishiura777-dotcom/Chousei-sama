@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>調整様 v0.5.0</title>
+<title>調整様 v0.5.1</title>
 <style>
   :root{
     --bg:#f3f6fb;--panel:rgba(255,255,255,.84);--line:rgba(148,163,184,.22);--line-strong:rgba(148,163,184,.34);
@@ -42,8 +42,6 @@
   input,textarea,select{font:inherit;width:100%;border:1px solid rgba(148,163,184,.26);background:rgba(255,255,255,.9);border-radius:18px;padding:14px 15px;color:var(--text);outline:none}
   input:focus,textarea:focus,select:focus{border-color:rgba(37,99,235,.55);box-shadow:0 0 0 5px rgba(37,99,235,.12);background:#fff}
   textarea{min-height:110px;resize:vertical}.status-select{min-width:88px;padding:10px 12px;border-radius:14px}
-  .stat,.note,.result-box,.viewer-hero,.viewer-card{padding:18px;border-radius:20px;border:1px solid var(--line);background:rgba(255,255,255,.76)}
-  .stat strong{display:block;font-size:24px}.stat span{display:block;color:var(--sub);font-size:12px;margin-top:4px}
   .card-list,.stack,.ranking,.viewer-candidate-list,.viewer-response-list{display:grid;gap:12px}
   .list-item{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.78)}
   .toggle-chip,.meta-chip{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:999px;border:1px solid var(--line);background:#f8fafc;font-size:12px;font-weight:800;color:#334155;white-space:nowrap}.toggle-chip input{width:auto;margin:0}
@@ -58,7 +56,7 @@
   .rank-reason,.viewer-reason{margin-top:10px;color:var(--sub);font-size:13px;line-height:1.7}.viewer-card h3,.viewer-response-card h3{margin:0 0 10px;font-size:18px}.viewer-response-row{display:grid;grid-template-columns:1fr 170px;gap:10px;align-items:center;margin-bottom:10px}
   .hidden{display:none !important}
   @media (max-width:1100px){.layout{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
-  @media (max-width:760px){body{padding:14px}.topbar,.grid-2,.candidate-add,.participant-row,.viewer-response-row{display:grid;grid-template-columns:1fr}.meta-strip,.actions{justify-content:flex-start}.stats{grid-template-columns:1fr}table{min-width:640px}}
+  @media (max-width:760px){body{padding:14px}.topbar,.grid-2,.candidate-add,.participant-row,.viewer-response-row{display:grid;grid-template-columns:1fr}.meta-strip,.actions{justify-content:flex-start}table{min-width:640px}}
 </style>
 </head>
 <body>
@@ -70,7 +68,7 @@
       <div class="lede">編集用と閲覧用をシンプルに切り替えます。閲覧画面では参加者が自分の参加可否だけを更新できます。</div>
     </div>
     <div class="meta-strip">
-      <div class="meta-pill">version <span id="versionLabel">0.5.0</span></div>
+      <div class="meta-pill">version <span id="versionLabel">0.5.1</span></div>
       <div id="statusPill" class="status-pill"><span class="status-dot"></span><span id="statusText">未接続</span></div>
       <div class="meta-pill">event <span id="eventLabel">-</span></div>
     </div>
@@ -150,7 +148,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
 import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-const APP_VERSION = "0.5.0";
+const APP_VERSION = "0.5.1";
 const firebaseConfig = {
   apiKey: "AIzaSyBTXGKYfhPoPqOwgwzoC78N1R7f0He67j0",
   authDomain: "chousei-sama-85eed.firebaseapp.com",
@@ -171,7 +169,23 @@ let viewerSelectedParticipantId = "";
 
 function uid(){ return Math.random().toString(36).slice(2,9); }
 function esc(s){ return String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;"); }
-function availabilityLabel(v){ return v === 'ok' ? '○ 参加可' : v === 'maybe' ? '△ 調整可' : '× 不可'; }
+function getActiveInputState(){
+  const el = document.activeElement;
+  if(!el || !(el instanceof HTMLInputElement)) return null;
+  if(el.dataset.pname) return { type: 'pname', id: el.dataset.pname, start: el.selectionStart ?? null, end: el.selectionEnd ?? null };
+  if(el.dataset.prole) return { type: 'prole', id: el.dataset.prole, start: el.selectionStart ?? null, end: el.selectionEnd ?? null };
+  return null;
+}
+function restoreActiveInputState(active){
+  if(!active) return;
+  const selector = active.type === 'pname' ? `[data-pname="${active.id}"]` : `[data-prole="${active.id}"]`;
+  const el = document.querySelector(selector);
+  if(!el) return;
+  el.focus();
+  if(typeof active.start === 'number' && typeof active.end === 'number'){
+    try { el.setSelectionRange(active.start, active.end); } catch {}
+  }
+}
 function getEventId(){ const url = new URL(location.href); let id = url.searchParams.get("event"); if(!id){ id = Math.random().toString(36).slice(2); url.searchParams.set("event", id); history.replaceState({}, "", url.toString()); } return id; }
 function getScreenMode(){ const url = new URL(location.href); return url.searchParams.get("screen") === "viewer" ? "viewer" : "edit"; }
 function buildUrl(mode){ const url = new URL(location.href); url.searchParams.set("event", eventId); url.searchParams.set("screen", mode === "viewer" ? "viewer" : "edit"); return url.toString(); }
@@ -185,17 +199,7 @@ document.getElementById("eventLabel").textContent = eventId;
 
 function setCompactStatus(text, kind=""){ const pill = document.getElementById("statusPill"); const textEl = document.getElementById("statusText"); textEl.textContent = text; pill.className = `status-pill ${kind}`.trim(); }
 
-const state = {
-  appVersion: APP_VERSION,
-  title: "",
-  location: "",
-  deadline: "",
-  organizer: "",
-  desc: "",
-  candidates: [],
-  participants: [],
-  responses: {}
-};
+const state = { appVersion: APP_VERSION, title: "", location: "", deadline: "", organizer: "", desc: "", candidates: [], participants: [], responses: {} };
 
 function ensure(){
   state.participants.forEach((p, pi) => {
@@ -217,20 +221,7 @@ function ensure(){
   if(viewerSelectedParticipantId && !state.participants.some(p => p.id === viewerSelectedParticipantId)) viewerSelectedParticipantId = state.participants[0]?.id || "";
 }
 
-function serializeState(){
-  ensure();
-  return {
-    appVersion: APP_VERSION,
-    title: state.title,
-    location: state.location,
-    deadline: state.deadline,
-    organizer: state.organizer,
-    desc: state.desc,
-    candidates: state.candidates,
-    participants: state.participants,
-    responses: state.responses
-  };
-}
+function serializeState(){ ensure(); return { appVersion: APP_VERSION, title: state.title, location: state.location, deadline: state.deadline, organizer: state.organizer, desc: state.desc, candidates: state.candidates, participants: state.participants, responses: state.responses }; }
 
 async function save(){
   if(isApplyingRemote) return;
@@ -238,7 +229,7 @@ async function save(){
   catch(e){ console.error(e); setCompactStatus("保存失敗", "err"); }
 }
 function scheduleSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(save, 650); }
-function scheduleViewerRefresh(){
+function schedulePreviewRefresh(){
   clearTimeout(previewTimer);
   previewTimer = setTimeout(() => {
     renderViewer();
@@ -257,10 +248,12 @@ function subscribe(){
           setCompactStatus("同期中", "ok");
           return;
         }
+        const active = getActiveInputState();
         isApplyingRemote = true;
         Object.assign(state, snap.data());
         ensure();
         render();
+        restoreActiveInputState(active);
         setCompactStatus(firstSnapshot ? "接続成功" : "同期中", "ok");
       }else{
         render();
@@ -296,37 +289,25 @@ function renderEditor(){
   cList.innerHTML = state.candidates.map((c, i) => `<div class="list-item"><div><strong>候補${i+1}: ${esc(c.date)} ${esc(c.time || "")}</strong><small>回答表とランキングに反映中</small></div><button class="btn-danger" type="button" data-cdel="${c.id}">削除</button></div>`).join("");
   document.querySelectorAll("[data-cdel]").forEach(btn => btn.onclick = () => { state.candidates = state.candidates.filter(c => c.id !== btn.dataset.cdel); render(); scheduleSave(); });
 
+  const active = getActiveInputState();
   pList.innerHTML = state.participants.map((p) => `<div class="participant-row"><input value="${esc(p.name)}" data-pname="${p.id}" placeholder="参加者名"><input value="${esc(p.role || "")}" data-prole="${p.id}" placeholder="役割"><label class="toggle-chip"><input type="checkbox" data-pimp="${p.id}" ${p.important ? "checked" : ""}> 重要人物</label><button class="btn-danger" type="button" data-pdel="${p.id}">削除</button></div>`).join("");
   document.querySelectorAll("[data-pname]").forEach(input => {
     input.oninput = () => {
       const t = state.participants.find(p => p.id === input.dataset.pname);
-      if(t){
-        t.name = input.value;
-        scheduleViewerRefresh();
-        scheduleSave();
-      }
+      if(t){ t.name = input.value; schedulePreviewRefresh(); scheduleSave(); }
     };
-    input.onblur = () => {
-      renderEditorTable();
-      renderViewer();
-    };
+    input.onblur = () => { renderEditorTable(); renderViewer(); };
   });
   document.querySelectorAll("[data-prole]").forEach(input => {
     input.oninput = () => {
       const t = state.participants.find(p => p.id === input.dataset.prole);
-      if(t){
-        t.role = input.value;
-        scheduleViewerRefresh();
-        scheduleSave();
-      }
+      if(t){ t.role = input.value; schedulePreviewRefresh(); scheduleSave(); }
     };
-    input.onblur = () => {
-      renderEditorTable();
-      renderViewer();
-    };
+    input.onblur = () => { renderEditorTable(); renderViewer(); };
   });
   document.querySelectorAll("[data-pimp]").forEach(input => input.onchange = () => { const t = state.participants.find(p => p.id === input.dataset.pimp); if(t){ t.important = input.checked; renderEditorTable(); renderViewer(); renderResult(); renderRanking(); scheduleSave(); } });
   document.querySelectorAll("[data-pdel]").forEach(btn => btn.onclick = () => { state.participants = state.participants.filter(p => p.id !== btn.dataset.pdel); delete state.responses[btn.dataset.pdel]; render(); scheduleSave(); });
+  restoreActiveInputState(active);
 
   renderEditorTable();
   renderResult();
