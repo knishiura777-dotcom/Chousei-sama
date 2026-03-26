@@ -1,587 +1,211 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>調整様（Firestore接続状況つき）</title>
-  <style>
-    :root {
-      --bg: #f5f7fb;
-      --panel: #ffffff;
-      --line: #d9e0ea;
-      --text: #1c2430;
-      --sub: #667085;
-      --accent: #2563eb;
-      --ok: #166534;
-      --warn: #92400e;
-      --err: #b91c1c;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      padding: 20px;
-      background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
-    .app {
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-    .panel {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
-    }
-    h1, h2 {
-      margin: 0 0 12px;
-    }
-    .sub {
-      color: var(--sub);
-      font-size: 14px;
-      line-height: 1.6;
-    }
-    .row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-    .grid2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-    input, textarea, select, button {
-      font: inherit;
-    }
-    input, textarea, select {
-      width: 100%;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 10px 12px;
-      background: #fff;
-    }
-    textarea {
-      min-height: 90px;
-      resize: vertical;
-    }
-    button {
-      border: none;
-      border-radius: 10px;
-      padding: 10px 14px;
-      background: var(--accent);
-      color: #fff;
-      cursor: pointer;
-      font-weight: 700;
-    }
-    .ghost {
-      background: #fff;
-      color: var(--text);
-      border: 1px solid var(--line);
-    }
-    .danger {
-      background: #fee2e2;
-      color: #991b1b;
-      border: 1px solid #fecaca;
-    }
-    .list-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 10px 12px;
-      margin-bottom: 8px;
-      background: #fcfdff;
-    }
-    .participant-row {
-      display: grid;
-      grid-template-columns: 1fr 180px auto;
-      gap: 10px;
-      align-items: center;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 10px 12px;
-      margin-bottom: 8px;
-      background: #fcfdff;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #fff;
-      border: 1px solid var(--line);
-    }
-    th, td {
-      border-bottom: 1px solid #edf2f7;
-      padding: 10px;
-      text-align: left;
-      vertical-align: middle;
-    }
-    th {
-      background: #f8fafc;
-      font-size: 13px;
-    }
-    .small {
-      color: var(--sub);
-      font-size: 13px;
-    }
-    .status-box {
-      padding: 12px 14px;
-      border-radius: 10px;
-      background: #f8fafc;
-      border: 1px solid var(--line);
-      font-weight: 700;
-    }
-    .result-box {
-      padding: 14px;
-      border-radius: 10px;
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
-      line-height: 1.7;
-    }
-    @media (max-width: 800px) {
-      .grid2, .participant-row {
-        grid-template-columns: 1fr;
-      }
-      table {
-        display: block;
-        overflow-x: auto;
-      }
-    }
-  </style>
+<meta charset="UTF-8">
+<title>調整様（完全版） v0.1.0</title>
+<style>
+body{font-family:sans-serif;background:#f5f7fb;padding:20px}
+.panel{background:#fff;padding:16px;margin-bottom:16px;border-radius:10px}
+input,textarea,select{width:100%;padding:8px;margin:4px 0}
+button{padding:8px 12px;background:#2563eb;color:#fff;border:none;border-radius:6px}
+</style>
 </head>
 <body>
-  <div class="app">
-    <div class="panel">
-      <h1>調整様</h1>
-      <div class="sub">予定名・候補日・参加者・回答を Firestore に保存し、接続状況も表示する版です。</div>
-    </div>
+<div style="max-width:960px;margin:0 auto 12px auto;padding:8px 12px;font-size:13px;color:#475569;">version <span id="versionLabel">0.1.0</span></div>
 
-    <div class="panel">
-      <h2>Firestore接続状況</h2>
-      <div id="statusBox" class="status-box">初期化前</div>
-      <div class="small" style="margin-top:8px;">eventId: <span id="eventIdLabel">-</span></div>
-      <div class="small">同じ URL を共有すると、同じイベントを開けます。</div>
-    </div>
+<div class="panel">
+<h2>予定情報</h2>
+<input id="title" placeholder="予定名（例：研究打ち合わせ）">
+<input id="location" placeholder="場所 / URL">
+<input id="deadline" type="datetime-local">
+<input id="organizer" placeholder="幹事名">
+<textarea id="desc" placeholder="説明"></textarea>
+</div>
 
-    <div class="panel">
-      <h2>予定情報</h2>
-      <div class="grid2">
-        <div>
-          <label class="small" for="title">予定名</label>
-          <input id="title" placeholder="例：研究打ち合わせ" />
-        </div>
-        <div>
-          <label class="small" for="location">場所 / URL</label>
-          <input id="location" placeholder="例：会議室A / Zoom" />
-        </div>
-      </div>
-      <div class="grid2">
-        <div>
-          <label class="small" for="deadline">回答締切</label>
-          <input id="deadline" type="datetime-local" />
-        </div>
-        <div>
-          <label class="small" for="organizer">幹事</label>
-          <input id="organizer" placeholder="例：西浦" />
-        </div>
-      </div>
-      <div>
-        <label class="small" for="desc">説明</label>
-        <textarea id="desc" placeholder="説明"></textarea>
-      </div>
-    </div>
+<div class="panel">
+<h2>候補日</h2>
+<input type="date" id="d">
+<input type="time" id="t" value="18:00">
+<button id="addC">追加</button>
+<div id="cList"></div>
+</div>
 
-    <div class="panel">
-      <h2>候補日</h2>
-      <div class="row">
-        <input type="date" id="d" style="max-width:220px;" />
-        <input type="time" id="t" value="18:00" style="max-width:160px;" />
-        <button id="addC" type="button">追加</button>
-      </div>
-      <div id="cList"></div>
-    </div>
+<div class="panel">
+<h2>参加者</h2>
+<button id="addP">追加</button>
+<div id="pList"></div>
+</div>
 
-    <div class="panel">
-      <h2>参加者</h2>
-      <div class="row">
-        <button id="addP" type="button">追加</button>
-      </div>
-      <div id="pList"></div>
-    </div>
+<div class="panel">
+<h2>回答</h2>
+<div id="table"></div>
+</div>
 
-    <div class="panel">
-      <h2>回答</h2>
-      <div id="table"></div>
-    </div>
+<div class="panel">
+<h2>結果</h2>
+<div id="result"></div>
+</div>
 
-    <div class="panel">
-      <h2>結果</h2>
-      <div id="result" class="result-box">候補日を入力してください。</div>
-    </div>
-  </div>
+<script type="module">
+const APP_VERSION = "0.1.0";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyBTXGKYfhPoPqOwgwzoC78N1R7f0He67j0",
+  authDomain: "chousei-sama-85eed.firebaseapp.com",
+  projectId: "chousei-sama-85eed",
+  storageBucket: "chousei-sama-85eed.firebasestorage.app",
+  messagingSenderId: "547215861134",
+  appId: "1:547215861134:web:67d95b90375aea65ceb0df"
+};
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyBTXGKYfhPoPqOwgwzoC78N1R7f0He67j0",
-      authDomain: "chousei-sama-85eed.firebaseapp.com",
-      projectId: "chousei-sama-85eed",
-      storageBucket: "chousei-sama-85eed.firebasestorage.app",
-      messagingSenderId: "547215861134",
-      appId: "1:547215861134:web:67d95b90375aea65ceb0df"
-    };
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+function uid(){return Math.random().toString(36).slice(2,9)}
 
-    let isApplyingRemote = false;
-    let saveTimer = null;
-    let firstSnapshot = true;
+function getEventId(){
+  const url=new URL(location.href);
+  let id=url.searchParams.get("event");
+  if(!id){
+    id=Math.random().toString(36).slice(2);
+    url.searchParams.set("event",id);
+    location.href=url;
+  }
+  return id;
+}
+const eventId=getEventId();
 
-    function uid() {
-      return Math.random().toString(36).slice(2, 9);
+const state={
+  title:"",
+  location:"",
+  deadline:"",
+  organizer:"",
+  desc:"",
+  candidates:[],
+  participants:[],
+  responses:{}
+};
+
+async function save(){
+  await setDoc(doc(db,"events",eventId),state);
+}
+
+async function load(){
+  const snap=await getDoc(doc(db,"events",eventId));
+  if(snap.exists()) Object.assign(state,snap.data());
+  render();
+}
+
+function ensure(){
+  state.participants.forEach(p=>{
+    if(!state.responses[p.id]) state.responses[p.id]={};
+    state.candidates.forEach(c=>{
+      if(!state.responses[p.id][c.id]) state.responses[p.id][c.id]='maybe';
+    });
+  });
+}
+
+function render(){
+  ensure();
+
+  title.value=state.title;
+  location.value=state.location;
+  deadline.value=state.deadline;
+  organizer.value=state.organizer;
+  desc.value=state.desc;
+
+  cList.innerHTML=state.candidates.map(c=>`<div>${c.date} ${c.time}</div>`).join("");
+
+  pList.innerHTML=state.participants.map(p=>
+    `<input value="${p.name}" data="${p.id}">`
+  ).join("");
+
+  document.querySelectorAll('#pList input').forEach(i=>{
+    i.oninput=()=>{
+      state.participants.find(p=>p.id===i.dataset.id).name=i.value;
+      renderTable(); save();
     }
+  });
 
-    function esc(s) {
-      return String(s ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#39;");
+  renderTable();
+}
+
+function renderTable(){
+  let html='<table border="1"><tr><th></th>';
+  state.candidates.forEach(c=>html+=`<th>${c.date}<br>${c.time}</th>`);
+  html+='</tr>';
+
+  state.participants.forEach(p=>{
+    html+=`<tr><td>${p.name}</td>`;
+    state.candidates.forEach(c=>{
+      const v=state.responses[p.id][c.id];
+      html+=`<td><select data="${p.id}|${c.id}">
+      <option value="ok" ${v==='ok'?'selected':''}>○</option>
+      <option value="maybe" ${v==='maybe'?'selected':''}>△</option>
+      <option value="ng" ${v==='ng'?'selected':''}>×</option>
+      </select></td>`;
+    });
+    html+='</tr>';
+  });
+
+  html+='</table>';
+  table.innerHTML=html;
+
+  document.querySelectorAll('select').forEach(s=>{
+    s.onchange=()=>{
+      const [p,c]=s.dataset.split('|');
+      state.responses[p][c]=s.value;
+      calc(); save();
     }
+  });
 
-    function setStatus(text, color = "#111827") {
-      const box = document.getElementById("statusBox");
-      box.textContent = text;
-      box.style.color = color;
-    }
+  calc();
+}
 
-    function getEventId() {
-      const url = new URL(location.href);
-      let id = url.searchParams.get("event");
-      if (!id) {
-        id = Math.random().toString(36).slice(2);
-        url.searchParams.set("event", id);
-        history.replaceState({}, "", url.toString());
-      }
-      return id;
-    }
+function calc(){
+  const res=state.candidates.map(c=>{
+    let score=0;
+    state.participants.forEach(p=>{
+      const v=state.responses[p.id][c.id];
+      if(v==='ok') score+=2;
+      if(v==='maybe') score+=1;
+      if(v==='ng') score-=2;
+    });
+    return {c,score};
+  }).sort((a,b)=>b.score-a.score);
 
-    const eventId = getEventId();
-    document.getElementById("eventIdLabel").textContent = eventId;
+  if(res.length){
+    result.innerHTML=`
+      <strong>${state.title || '予定名未設定'}</strong><br>
+      場所: ${state.location || '未設定'}<br>
+      締切: ${state.deadline || '未設定'}<br>
+      幹事: ${state.organizer || '未設定'}<br><br>
+      👉 最適日: ${res[0].c.date} ${res[0].c.time}
+    `;
+  }
+}
 
-    const state = {
-      title: "",
-      location: "",
-      deadline: "",
-      organizer: "",
-      desc: "",
-      candidates: [],
-      participants: [],
-      responses: {}
-    };
+addC.onclick=()=>{
+  if(!d.value) return;
+  state.candidates.push({id:uid(),date:d.value,time:t.value});
+  render(); save();
+};
 
-    function ensure() {
-      state.participants.forEach((p) => {
-        if (!state.responses[p.id]) state.responses[p.id] = {};
-        state.candidates.forEach((c) => {
-          if (!state.responses[p.id][c.id]) {
-            state.responses[p.id][c.id] = "maybe";
-          }
-        });
-        Object.keys(state.responses[p.id]).forEach((cid) => {
-          if (!state.candidates.some((c) => c.id === cid)) {
-            delete state.responses[p.id][cid];
-          }
-        });
-      });
+addP.onclick=()=>{
+  state.participants.push({id:uid(),name:"参加者"});
+  render(); save();
+};
 
-      Object.keys(state.responses).forEach((pid) => {
-        if (!state.participants.some((p) => p.id === pid)) {
-          delete state.responses[pid];
-        }
-      });
-    }
+title.oninput=e=>{state.title=e.target.value; save();}
+location.oninput=e=>{state.location=e.target.value; save();}
+deadline.oninput=e=>{state.deadline=e.target.value; save();}
+organizer.oninput=e=>{state.organizer=e.target.value; save();}
+desc.oninput=e=>{state.desc=e.target.value; save();}
 
-    function serializeState() {
-      ensure();
-      return {
-        title: state.title,
-        location: state.location,
-        deadline: state.deadline,
-        organizer: state.organizer,
-        desc: state.desc,
-        candidates: state.candidates,
-        participants: state.participants,
-        responses: state.responses
-      };
-    }
-
-    async function save() {
-      if (isApplyingRemote) return;
-      try {
-        setStatus("Firestore 保存中...", "#92400e");
-        await setDoc(doc(db, "events", eventId), serializeState(), { merge: true });
-        setStatus("Firestore 接続中 / 保存成功", "#166534");
-      } catch (e) {
-        console.error(e);
-        setStatus("Firestore 保存失敗: " + e.message, "#b91c1c");
-      }
-    }
-
-    function scheduleSave() {
-      clearTimeout(saveTimer);
-      saveTimer = setTimeout(() => {
-        save();
-      }, 250);
-    }
-
-    function subscribe() {
-      setStatus("Firestore へ接続しています...", "#1d4ed8");
-      onSnapshot(
-        doc(db, "events", eventId),
-        (snap) => {
-          try {
-            if (snap.exists()) {
-              isApplyingRemote = true;
-              Object.assign(state, snap.data());
-              ensure();
-              render();
-              setStatus(
-                firstSnapshot
-                  ? "Firestore 接続成功 / データ受信"
-                  : "Firestore 同期中",
-                "#166534"
-              );
-            } else {
-              setStatus("Firestore 接続成功 / 新規イベント", "#166534");
-            }
-          } catch (e) {
-            console.error(e);
-            setStatus("描画エラー: " + e.message, "#b91c1c");
-          } finally {
-            firstSnapshot = false;
-            isApplyingRemote = false;
-          }
-        },
-        (error) => {
-          console.error(error);
-          setStatus("Firestore 接続エラー: " + error.message, "#b91c1c");
-        }
-      );
-    }
-
-    function render() {
-      ensure();
-
-      document.getElementById("title").value = state.title;
-      document.getElementById("location").value = state.location;
-      document.getElementById("deadline").value = state.deadline;
-      document.getElementById("organizer").value = state.organizer;
-      document.getElementById("desc").value = state.desc;
-
-      renderCandidates();
-      renderParticipants();
-      renderTable();
-      renderResult();
-    }
-
-    function renderCandidates() {
-      const cList = document.getElementById("cList");
-      cList.innerHTML = "";
-
-      state.candidates.forEach((c, index) => {
-        const row = document.createElement("div");
-        row.className = "list-item";
-        row.innerHTML = `
-          <div>
-            <strong>候補${index + 1}: ${esc(c.date)} ${esc(c.time || "")}</strong>
-          </div>
-          <button type="button" class="danger" data-cdel="${c.id}">削除</button>
-        `;
-        cList.appendChild(row);
-      });
-
-      document.querySelectorAll("[data-cdel]").forEach((btn) => {
-        btn.onclick = () => {
-          state.candidates = state.candidates.filter((c) => c.id !== btn.dataset.cdel);
-          render();
-          scheduleSave();
-        };
-      });
-    }
-
-    function renderParticipants() {
-      const pList = document.getElementById("pList");
-      pList.innerHTML = "";
-
-      state.participants.forEach((p) => {
-        const row = document.createElement("div");
-        row.className = "participant-row";
-        row.innerHTML = `
-          <input value="${esc(p.name)}" data-pname="${p.id}" placeholder="参加者名" />
-          <span class="small">参加者</span>
-          <button type="button" class="danger" data-pdel="${p.id}">削除</button>
-        `;
-        pList.appendChild(row);
-      });
-
-      document.querySelectorAll("[data-pname]").forEach((input) => {
-        input.oninput = () => {
-          const target = state.participants.find((p) => p.id === input.dataset.pname);
-          if (target) {
-            target.name = input.value;
-            renderTable();
-            renderResult();
-            scheduleSave();
-          }
-        };
-      });
-
-      document.querySelectorAll("[data-pdel]").forEach((btn) => {
-        btn.onclick = () => {
-          state.participants = state.participants.filter((p) => p.id !== btn.dataset.pdel);
-          delete state.responses[btn.dataset.pdel];
-          render();
-          scheduleSave();
-        };
-      });
-    }
-
-    function renderTable() {
-      const table = document.getElementById("table");
-
-      if (!state.candidates.length || !state.participants.length) {
-        table.innerHTML = '<div class="small">候補日と参加者を追加してください。</div>';
-        return;
-      }
-
-      let html = '<table><thead><tr><th></th>';
-      state.candidates.forEach((c) => {
-        html += `<th>${esc(c.date)}<br><span class="small">${esc(c.time || "")}</span></th>`;
-      });
-      html += '</tr></thead><tbody>';
-
-      state.participants.forEach((p) => {
-        html += `<tr><td>${esc(p.name)}</td>`;
-        state.candidates.forEach((c) => {
-          const v = state.responses[p.id][c.id];
-          html += `
-            <td>
-              <select data-response="${p.id}|${c.id}">
-                <option value="ok" ${v === "ok" ? "selected" : ""}>○</option>
-                <option value="maybe" ${v === "maybe" ? "selected" : ""}>△</option>
-                <option value="ng" ${v === "ng" ? "selected" : ""}>×</option>
-              </select>
-            </td>
-          `;
-        });
-        html += "</tr>";
-      });
-
-      html += "</tbody></table>";
-      table.innerHTML = html;
-
-      document.querySelectorAll("[data-response]").forEach((select) => {
-        select.onchange = () => {
-          const [pid, cid] = select.dataset.response.split("|");
-          state.responses[pid][cid] = select.value;
-          renderResult();
-          scheduleSave();
-        };
-      });
-    }
-
-    function calc() {
-      return state.candidates
-        .map((c) => {
-          let score = 0;
-          state.participants.forEach((p) => {
-            const v = state.responses[p.id]?.[c.id];
-            if (v === "ok") score += 2;
-            if (v === "maybe") score += 1;
-            if (v === "ng") score -= 2;
-          });
-          return { c, score };
-        })
-        .sort((a, b) => b.score - a.score);
-    }
-
-    function renderResult() {
-      const result = document.getElementById("result");
-      const ranked = calc();
-
-      if (!ranked.length) {
-        result.innerHTML = "候補日がありません。";
-        return;
-      }
-
-      const top = ranked[0];
-      result.innerHTML = `
-        <strong>${esc(state.title || "予定名未設定")}</strong><br>
-        場所: ${esc(state.location || "未設定")}<br>
-        締切: ${esc(state.deadline || "未設定")}<br>
-        幹事: ${esc(state.organizer || "未設定")}<br><br>
-        👉 最適日: ${esc(top.c.date)} ${esc(top.c.time || "")}<br>
-        score: ${top.score}
-      `;
-    }
-
-    document.getElementById("addC").onclick = () => {
-      const d = document.getElementById("d").value;
-      const t = document.getElementById("t").value || "18:00";
-      if (!d) {
-        alert("日付を入力してください");
-        return;
-      }
-      state.candidates.push({ id: uid(), date: d, time: t });
-      render();
-      scheduleSave();
-    };
-
-    document.getElementById("addP").onclick = () => {
-      state.participants.push({ id: uid(), name: "参加者" });
-      render();
-      scheduleSave();
-    };
-
-    document.getElementById("title").oninput = (e) => {
-      state.title = e.target.value;
-      renderResult();
-      scheduleSave();
-    };
-    document.getElementById("location").oninput = (e) => {
-      state.location = e.target.value;
-      renderResult();
-      scheduleSave();
-    };
-    document.getElementById("deadline").oninput = (e) => {
-      state.deadline = e.target.value;
-      renderResult();
-      scheduleSave();
-    };
-    document.getElementById("organizer").oninput = (e) => {
-      state.organizer = e.target.value;
-      renderResult();
-      scheduleSave();
-    };
-    document.getElementById("desc").oninput = (e) => {
-      state.desc = e.target.value;
-      scheduleSave();
-    };
-
-    render();
-    setStatus("初期化完了。Firestore 接続待機中...", "#1d4ed8");
-    subscribe();
-  </script>
+document.getElementById("versionLabel").textContent = APP_VERSION;
+load();
+</script>
 </body>
 </html>
