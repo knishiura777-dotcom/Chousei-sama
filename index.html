@@ -96,8 +96,32 @@ function renderCandidates(){
 
 function renderParticipants(){
   const el=document.getElementById('participantList'); el.innerHTML='';
-  state.participants.forEach(p=>{
-    el.innerHTML+=`<div>${p.name}</div>`;
+  state.participants.forEach((p, index)=>{
+    el.innerHTML+=`<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+      <input value="${esc(p.name)}" data-pname="${p.id}" placeholder="参加者名を入力" style="max-width:320px;">
+      <button class="danger" data-pdel="${p.id}">削除</button>
+    </div>`;
+  });
+
+  document.querySelectorAll('[data-pname]').forEach(input=>{
+    input.oninput=()=>{
+      const target=state.participants.find(p=>p.id===input.dataset.pname);
+      if(target){
+        target.name=input.value || '参加者';
+        renderTable();
+        renderResult();
+      }
+    };
+  });
+
+  document.querySelectorAll('[data-pdel]').forEach(btn=>{
+    btn.onclick=()=>{
+      state.participants=state.participants.filter(p=>p.id!==btn.dataset.pdel);
+      delete state.responses[btn.dataset.pdel];
+      render();
+    };
+  });
+}</div>`;
   });
 }
 
