@@ -56,6 +56,10 @@
   .pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border-radius:999px;font-size:12px;font-weight:800}.pill.ok{background:#dcfce7;color:#166534}.pill.maybe{background:#ffedd5;color:#9a3412}.pill.ng{background:#fee2e2;color:#991b1b}
   .rank-reason,.viewer-reason{margin-top:10px;color:var(--sub);font-size:13px;line-height:1.7}.viewer-card h3,.viewer-response-card h3,.ai-panel h3{margin:0 0 10px;font-size:18px}.viewer-response-row{display:grid;grid-template-columns:1fr 170px;gap:10px;align-items:center;margin-bottom:10px}
   .ai-panel{margin-bottom:18px;background:linear-gradient(180deg,rgba(239,246,255,.92) 0%, rgba(255,255,255,.96) 100%)}
+  .insight-panel{padding:18px;border-radius:22px;background:linear-gradient(180deg,#f8fbff 0%, #ffffff 100%);border:1px solid #dbeafe;line-height:1.75}
+  .insight-panel h3{margin:0 0 10px;font-size:18px}
+  .insight-list{display:grid;gap:10px;margin-top:12px}
+  .insight-item{padding:12px 14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.86)}
   .ai-row{display:grid;grid-template-columns:1fr 280px;gap:12px;align-items:start}
   .hidden{display:none !important}
   @media (max-width:1100px){.layout{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
@@ -153,7 +157,8 @@
       </main>
 
       <aside>
-        <section class="panel"><div class="section-head"><div><h2>結果</h2><p>最も揉めにくい候補を表示します。</p></div></div><div id="result" class="result-box">候補日を入力してください。</div></section>
+        <section class="panel"><div class="section-head"><div><h2>結果</h2><p>最も揉めにくい候補を表示します。</p></div><div class="actions"><button id="runAiInsightsBtn" class="btn-soft" type="button">AI分析</button></div></div><div id="result" class="result-box">候補日を入力してください。</div></section>
+        <section class="panel"><div class="section-head"><div><h2>AI分析</h2><p>Gemini が人間らしい判断理由を解説します。</p></div></div><div id="aiInsightsBox" class="insight-panel"><div class="small">「AI分析」を押すと、現在の候補日と参加状況から解説を生成します。</div></div></section>
         <section class="panel"><div class="section-head"><div><h2>ランキング</h2><p>各候補のスコアと理由です。</p></div></div><div id="ranking" class="ranking"></div></section>
       </aside>
     </div>
@@ -198,6 +203,7 @@ let previewTimer = null;
 let firstSnapshot = true;
 let screenMode = "edit";
 let viewerSelectedParticipantId = "";
+let aiInsights = null;
 
 function uid(){ return Math.random().toString(36).slice(2,9); }
 function esc(s){ return String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;"); }
@@ -384,6 +390,116 @@ function applyScreenMode(mode){
   updateUrlForScreen(screenMode);
 }
 
+function renderAiInsights(){
+  if(!aiInsights){
+    aiInsightsBox.innerHTML = '<div class="small">「AI分析」を押すと、現在の候補日と参加状況から解説を生成します。</div>';
+    return;
+  }
+  const alternatives = Array.isArray(aiInsights.alternatives) ? aiInsights.alternatives : [];
+  const cautions = Array.isArray(aiInsights.cautions) ? aiInsights.cautions : [];
+  aiInsightsBox.innerHTML = `
+    <h3>${esc(aiInsights.headline || 'AI分析結果')}</h3>
+    <div class="small">${esc(aiInsights.summary || '')}</div>
+    <div class="insight-list">
+      ${alternatives.map(item => `<div class="insight-item"><strong>${esc(item.label || '代替案')}</strong><div class="small">${esc(item.reason || '')}</div></div>`).join('')}
+      ${cautions.map(item => `<div class="insight-item"><strong>注意点</strong><div class="small">${esc(item)}</div></div>`).join('')}
+    </div>
+  `;
+}
+
+async function runAiInsights(){
+  const apiKey = geminiApiKey.value.trim() || loadGeminiKey();
+  if(!apiKey){
+    setCompactStatus('Geminiキー未入力', 'err');
+    magicSetupPanel.classList.remove('hidden');
+    geminiApiKey.focus();
+    return;
+  }
+  if(!state.candidates.length || !state.participants.length){
+    setCompactStatus('候補日と参加者が必要', 'err');
+    return;
+  }
+  saveGeminiKey(apiKey);
+  setCompactStatus('AI分析中', 'warn');
+  aiInsightsBox.innerHTML = '<div class="small">AI分析を実行しています...</div>';
+
+  const ranked = calc().map(item => ({
+    label: `${item.c.date} ${item.c.time || ''}`.trim(),
+    score: item.score,
+    ok: item.ok,
+    maybe: item.maybe,
+    ng: item.ng,
+    importantOk: item.importantOk
+  }));
+  const participantSummary = state.participants.map(p => ({
+    name: p.name || '参加者',
+    role: p.role || '',
+    important: !!p.important,
+    responses: state.candidates.map(c => ({ candidate: `${c.date} ${c.time || ''}`.trim(), value: state.responses[p.id]?.[c.id] || 'maybe' }))
+  }));
+
+  const schema = {
+    type: 'OBJECT',
+    properties: {
+      headline: { type: 'STRING' },
+      summary: { type: 'STRING' },
+      alternatives: {
+        type: 'ARRAY',
+        items: {
+          type: 'OBJECT',
+          properties: {
+            label: { type: 'STRING' },
+            reason: { type: 'STRING' }
+          },
+          required: ['label','reason']
+        }
+      },
+      cautions: { type: 'ARRAY', items: { type: 'STRING' } }
+    },
+    required: ['headline','summary','alternatives','cautions']
+  };
+
+  const instruction = `あなたは日本語の会議日程調整アシスタントです。候補日を点数順に並べるだけではなく、人間らしい判断理由を短く明快に説明してください。重要人物が参加できる候補、NGが多い候補、代替案として残す価値がある候補を見極めてください。出力は必ずJSONのみ。`;
+  try{
+    const res = await fetch(GEMINI_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': apiKey
+      },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: instruction }] },
+        contents: [{ role: 'user', parts: [{ text: JSON.stringify({
+          title: state.title,
+          deadline: state.deadline,
+          location: state.location,
+          organizer: state.organizer,
+          rankedCandidates: ranked,
+          participants: participantSummary
+        }) }] }],
+        generationConfig: {
+          responseMimeType: 'application/json',
+          responseJsonSchema: schema,
+          temperature: 0.3
+        }
+      })
+    });
+    if(!res.ok){
+      const errText = await res.text();
+      throw new Error(errText || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    aiInsights = JSON.parse(stripJsonFence(rawText));
+    renderAiInsights();
+    setCompactStatus('AI分析完了', 'ok');
+  }catch(e){
+    console.error(e);
+    aiInsightsBox.innerHTML = '<div class="small">AI分析に失敗しました。APIキーとネットワークを確認してください。</div>';
+    setCompactStatus('AI分析失敗', 'err');
+  }
+}
+
 function applyMagicSetup(data){
   if(data.title) state.title = data.title;
   if(data.description) state.desc = data.description;
@@ -482,7 +598,7 @@ async function runMagicSetup(){
   }
 }
 
-function render(){ ensure(); renderEditor(); renderViewer(); applyScreenMode(screenMode); }
+function render(){ ensure(); renderEditor(); renderViewer(); renderAiInsights(); applyScreenMode(screenMode); }
 
 focusCandidateBtn.onclick = () => d.focus();
 addC.onclick = () => { if(!d.value) return; state.candidates.push({ id: uid(), date: d.value, time: t.value || '18:00' }); render(); scheduleSave(); };
@@ -502,6 +618,7 @@ copyViewerUrlBtn.onclick = () => copyText(buildUrl('viewer'), '閲覧用URLを�
 toggleMagicSetupBtn.onclick = () => magicSetupPanel.classList.toggle('hidden');
 closeMagicSetupBtn.onclick = () => magicSetupPanel.classList.add('hidden');
 runMagicSetupBtn.onclick = () => runMagicSetup();
+runAiInsightsBtn.onclick = () => runAiInsights();
 geminiApiKey.onchange = e => saveGeminiKey(e.target.value.trim());
 
 render();
