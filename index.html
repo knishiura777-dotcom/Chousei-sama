@@ -1,654 +1,1405 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>調整様 v0.6.0</title>
-<style>
-  :root{
-    --bg:#f3f6fb;--panel:rgba(255,255,255,.84);--line:rgba(148,163,184,.22);--line-strong:rgba(148,163,184,.34);
-    --text:#0f172a;--sub:#64748b;--accent:#2563eb;--accent2:#7c3aed;--shadow:0 20px 60px rgba(15,23,42,.08);
-    --ok:#166534;--ok-bg:#dcfce7;--warn:#92400e;--warn-bg:#ffedd5;--err:#b91c1c;--err-bg:#fee2e2;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;padding:28px;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Sans","Yu Gothic",sans-serif;color:var(--text);background:radial-gradient(circle at top left, rgba(124,58,237,.08), transparent 30%),radial-gradient(circle at top right, rgba(37,99,235,.09), transparent 26%),linear-gradient(180deg,#eef3ff 0%,#f6f8fc 38%,#f7f9fd 100%)}
-  .shell{max-width:1360px;margin:0 auto}
-  .topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:18px}
-  .brand{display:flex;flex-direction:column;gap:10px}
-  .eyebrow,.meta-pill,.status-pill{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.72);backdrop-filter:blur(12px);border:1px solid var(--line);font-size:12px;font-weight:800;box-shadow:0 10px 24px rgba(15,23,42,.04)}
-  .eyebrow{color:var(--accent);text-transform:uppercase;letter-spacing:.04em;width:max-content}
-  .status-pill.ok{background:var(--ok-bg);border-color:#bbf7d0;color:var(--ok)}
-  .status-pill.warn{background:var(--warn-bg);border-color:#fed7aa;color:var(--warn)}
-  .status-pill.err{background:var(--err-bg);border-color:#fecaca;color:var(--err)}
-  .status-dot{width:8px;height:8px;border-radius:999px;background:currentColor;display:inline-block}
-  h1{margin:0;font-size:clamp(34px,4.6vw,56px);line-height:1.02;letter-spacing:-.04em}
-  .lede{max-width:760px;color:var(--sub);font-size:15px;line-height:1.75}
-  .meta-strip{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
-  .toolbar{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px}
-  .mode-switch{display:inline-flex;gap:6px;padding:6px;border-radius:999px;background:rgba(255,255,255,.72);border:1px solid var(--line);backdrop-filter:blur(10px)}
-  .mode-btn{border:none;background:transparent;color:#475569;padding:10px 14px;border-radius:999px;font-weight:800;cursor:pointer}
-  .mode-btn.active{background:linear-gradient(135deg,var(--accent) 0%, var(--accent2) 100%);color:#fff;box-shadow:0 10px 20px rgba(37,99,235,.22)}
-  .actions{display:flex;gap:10px;flex-wrap:wrap}
-  button{font:inherit;border:none;border-radius:16px;padding:11px 16px;cursor:pointer;font-weight:800;letter-spacing:.01em}
-  .btn-primary{background:linear-gradient(135deg,var(--accent) 0%, var(--accent2) 100%);color:#fff;box-shadow:0 12px 24px rgba(37,99,235,.22)}
-  .btn-soft{background:#eef2ff;color:#3730a3}.btn-ghost{background:rgba(255,255,255,.9);border:1px solid var(--line-strong);color:var(--text)}.btn-danger{background:#fff5f5;border:1px solid #fecaca;color:#b91c1c}
-  .layout{display:grid;grid-template-columns:1.18fr .82fr;gap:20px}
-  .viewer-layout{display:grid;grid-template-columns:1fr;gap:18px;max-width:920px;margin:0 auto}
-  .panel{background:var(--panel);backdrop-filter:blur(18px);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:24px;padding:22px}
-  .section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:16px}
-  .section-head h2{margin:0;font-size:24px;letter-spacing:-.03em}.section-head p{margin:6px 0 0;color:var(--sub);font-size:14px;line-height:1.7}
-  .grid-2,.candidate-add,.participant-row,.stats{display:grid;gap:12px}.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}.candidate-add{grid-template-columns:1.1fr 220px auto;align-items:end}.participant-row{grid-template-columns:1fr 180px auto auto;align-items:center}.stats{grid-template-columns:repeat(4,1fr)}
-  .field{display:flex;flex-direction:column;gap:8px}.label-row{display:flex;justify-content:space-between;align-items:center;gap:8px}label{font-size:13px;font-weight:800;color:#334155}.hint,.small{font-size:12px;color:var(--sub)}
-  input,textarea,select{font:inherit;width:100%;border:1px solid rgba(148,163,184,.26);background:rgba(255,255,255,.9);border-radius:18px;padding:14px 15px;color:var(--text);outline:none}
-  input:focus,textarea:focus,select:focus{border-color:rgba(37,99,235,.55);box-shadow:0 0 0 5px rgba(37,99,235,.12);background:#fff}
-  textarea{min-height:110px;resize:vertical}.status-select{min-width:88px;padding:10px 12px;border-radius:14px}
-  .card-list,.stack,.ranking,.viewer-candidate-list,.viewer-response-list{display:grid;gap:12px}
-  .list-item{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.78)}
-  .toggle-chip,.meta-chip{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:999px;border:1px solid var(--line);background:#f8fafc;font-size:12px;font-weight:800;color:#334155;white-space:nowrap}.toggle-chip input{width:auto;margin:0}
-  .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:20px;background:rgba(255,255,255,.86)}
-  table{width:100%;border-collapse:collapse;min-width:720px}th,td{padding:12px;border-bottom:1px solid #edf2f7;text-align:left;vertical-align:middle}th{background:rgba(248,250,252,.95);font-size:12px;font-weight:800;color:#334155;position:sticky;top:0;z-index:1}tr:last-child td{border-bottom:none}
-  .result-box,.viewer-hero,.ai-panel{padding:18px;border-radius:22px;background:linear-gradient(180deg,#eff6ff 0%, #ffffff 100%);border:1px solid #bfdbfe;line-height:1.75}
-  .result-box strong,.viewer-hero strong{display:block;font-size:22px;letter-spacing:-.03em}.result-meta,.viewer-meta{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 14px}
-  .rank-card,.viewer-candidate,.viewer-response-card{padding:16px;border-radius:20px;border:1px solid var(--line);background:rgba(255,255,255,.78)}
-  .rank-card.top,.viewer-candidate.top{border:2px solid rgba(37,99,235,.22);background:linear-gradient(180deg,rgba(239,246,255,.92) 0%, rgba(255,255,255,.94) 100%)}
-  .rank-head,.viewer-candidate-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px}
-  .score{display:inline-flex;padding:8px 10px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:800}
-  .pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border-radius:999px;font-size:12px;font-weight:800}.pill.ok{background:#dcfce7;color:#166534}.pill.maybe{background:#ffedd5;color:#9a3412}.pill.ng{background:#fee2e2;color:#991b1b}
-  .rank-reason,.viewer-reason{margin-top:10px;color:var(--sub);font-size:13px;line-height:1.7}.viewer-card h3,.viewer-response-card h3,.ai-panel h3{margin:0 0 10px;font-size:18px}.viewer-response-row{display:grid;grid-template-columns:1fr 170px;gap:10px;align-items:center;margin-bottom:10px}
-  .ai-panel{margin-bottom:18px;background:linear-gradient(180deg,rgba(239,246,255,.92) 0%, rgba(255,255,255,.96) 100%)}
-  .insight-panel{padding:18px;border-radius:22px;background:linear-gradient(180deg,#f8fbff 0%, #ffffff 100%);border:1px solid #dbeafe;line-height:1.75}
-  .insight-panel h3{margin:0 0 10px;font-size:18px}
-  .insight-list{display:grid;gap:10px;margin-top:12px}
-  .insight-item{padding:12px 14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.86)}
-  .ai-row{display:grid;grid-template-columns:1fr 280px;gap:12px;align-items:start}
-  .hidden{display:none !important}
-  @media (max-width:1100px){.layout{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
-  @media (max-width:760px){body{padding:14px}.topbar,.grid-2,.candidate-add,.participant-row,.viewer-response-row,.ai-row{display:grid;grid-template-columns:1fr}.meta-strip,.actions{justify-content:flex-start}table{min-width:640px}}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>調整様 v0.6.1</title>
+  <style>
+    :root{
+      --bg:#f3f6fb;
+      --panel:rgba(255,255,255,.84);
+      --line:rgba(148,163,184,.22);
+      --line-strong:rgba(148,163,184,.34);
+      --text:#0f172a;
+      --sub:#64748b;
+      --accent:#2563eb;
+      --accent2:#7c3aed;
+      --shadow:0 20px 60px rgba(15,23,42,.08);
+      --ok:#166534;
+      --ok-bg:#dcfce7;
+      --warn:#92400e;
+      --warn-bg:#ffedd5;
+      --err:#b91c1c;
+      --err-bg:#fee2e2;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      padding:28px;
+      font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Sans","Yu Gothic",sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(124,58,237,.08), transparent 30%),
+        radial-gradient(circle at top right, rgba(37,99,235,.09), transparent 26%),
+        linear-gradient(180deg,#eef3ff 0%,#f6f8fc 38%,#f7f9fd 100%);
+    }
+
+    .shell{max-width:1360px;margin:0 auto}
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:20px;
+      margin-bottom:18px;
+    }
+    .brand{display:flex;flex-direction:column;gap:10px}
+    .eyebrow,.meta-pill,.status-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.72);
+      backdrop-filter:blur(12px);
+      border:1px solid var(--line);
+      font-size:12px;
+      font-weight:800;
+      box-shadow:0 10px 24px rgba(15,23,42,.04);
+    }
+    .eyebrow{
+      color:var(--accent);
+      text-transform:uppercase;
+      letter-spacing:.04em;
+      width:max-content;
+    }
+    .status-pill.ok{background:var(--ok-bg);border-color:#bbf7d0;color:var(--ok)}
+    .status-pill.warn{background:var(--warn-bg);border-color:#fed7aa;color:var(--warn)}
+    .status-pill.err{background:var(--err-bg);border-color:#fecaca;color:var(--err)}
+    .status-dot{
+      width:8px;
+      height:8px;
+      border-radius:999px;
+      background:currentColor;
+      display:inline-block;
+    }
+    h1{
+      margin:0;
+      font-size:clamp(34px,4.6vw,56px);
+      line-height:1.02;
+      letter-spacing:-.04em;
+    }
+    .lede{
+      max-width:760px;
+      color:var(--sub);
+      font-size:15px;
+      line-height:1.75;
+    }
+    .meta-strip{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+    .toolbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:14px;
+      flex-wrap:wrap;
+      margin-bottom:18px;
+    }
+    .mode-switch{
+      display:inline-flex;
+      gap:6px;
+      padding:6px;
+      border-radius:999px;
+      background:rgba(255,255,255,.72);
+      border:1px solid var(--line);
+      backdrop-filter:blur(10px);
+    }
+    .mode-btn{
+      border:none;
+      background:transparent;
+      color:#475569;
+      padding:10px 14px;
+      border-radius:999px;
+      font-weight:800;
+      cursor:pointer;
+    }
+    .mode-btn.active{
+      background:linear-gradient(135deg,var(--accent) 0%, var(--accent2) 100%);
+      color:#fff;
+      box-shadow:0 10px 20px rgba(37,99,235,.22);
+    }
+    .actions{display:flex;gap:10px;flex-wrap:wrap}
+    button{
+      font:inherit;
+      border:none;
+      border-radius:16px;
+      padding:11px 16px;
+      cursor:pointer;
+      font-weight:800;
+      letter-spacing:.01em;
+    }
+    .btn-primary{
+      background:linear-gradient(135deg,var(--accent) 0%, var(--accent2) 100%);
+      color:#fff;
+      box-shadow:0 12px 24px rgba(37,99,235,.22);
+    }
+    .btn-soft{background:#eef2ff;color:#3730a3}
+    .btn-ghost{background:rgba(255,255,255,.9);border:1px solid var(--line-strong);color:var(--text)}
+    .btn-danger{background:#fff5f5;border:1px solid #fecaca;color:#b91c1c}
+
+    .layout{display:grid;grid-template-columns:1.18fr .82fr;gap:20px}
+    .viewer-layout{display:grid;grid-template-columns:1fr;gap:18px;max-width:920px;margin:0 auto}
+    .panel{
+      background:var(--panel);
+      backdrop-filter:blur(18px);
+      border:1px solid var(--line);
+      box-shadow:var(--shadow);
+      border-radius:24px;
+      padding:22px;
+    }
+    .section-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:16px;
+      margin-bottom:16px;
+    }
+    .section-head h2{
+      margin:0;
+      font-size:24px;
+      letter-spacing:-.03em;
+    }
+    .section-head p{
+      margin:6px 0 0;
+      color:var(--sub);
+      font-size:14px;
+      line-height:1.7;
+    }
+
+    .grid-2,.candidate-add,.participant-row,.viewer-response-row,.ai-row{
+      display:grid;
+      gap:12px;
+    }
+    .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .candidate-add{grid-template-columns:1.1fr 220px auto;align-items:end}
+    .participant-row{grid-template-columns:1fr 180px auto auto;align-items:center}
+    .viewer-response-row{grid-template-columns:1fr 170px;align-items:center}
+    .ai-row{grid-template-columns:1fr auto;align-items:start}
+
+    .field{display:flex;flex-direction:column;gap:8px}
+    .label-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:8px;
+    }
+    label{
+      font-size:13px;
+      font-weight:800;
+      color:#334155;
+    }
+    .hint,.small{
+      font-size:12px;
+      color:var(--sub);
+    }
+    input,textarea,select{
+      font:inherit;
+      width:100%;
+      border:1px solid rgba(148,163,184,.26);
+      background:rgba(255,255,255,.9);
+      border-radius:18px;
+      padding:14px 15px;
+      color:var(--text);
+      outline:none;
+    }
+    input:focus,textarea:focus,select:focus{
+      border-color:rgba(37,99,235,.55);
+      box-shadow:0 0 0 5px rgba(37,99,235,.12);
+      background:#fff;
+    }
+    textarea{min-height:110px;resize:vertical}
+    .status-select{min-width:88px;padding:10px 12px;border-radius:14px}
+    .card-list,.stack,.ranking,.viewer-candidate-list,.viewer-response-list,.insight-list{
+      display:grid;
+      gap:12px;
+    }
+    .list-item{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:14px;
+      padding:14px 16px;
+      border:1px solid var(--line);
+      border-radius:18px;
+      background:rgba(255,255,255,.78);
+    }
+    .toggle-chip,.meta-chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:#f8fafc;
+      font-size:12px;
+      font-weight:800;
+      color:#334155;
+      white-space:nowrap;
+    }
+    .toggle-chip input{width:auto;margin:0}
+    .table-wrap{
+      overflow:auto;
+      border:1px solid var(--line);
+      border-radius:20px;
+      background:rgba(255,255,255,.86);
+    }
+    table{width:100%;border-collapse:collapse;min-width:720px}
+    th,td{
+      padding:12px;
+      border-bottom:1px solid #edf2f7;
+      text-align:left;
+      vertical-align:middle;
+    }
+    th{
+      background:rgba(248,250,252,.95);
+      font-size:12px;
+      font-weight:800;
+      color:#334155;
+      position:sticky;
+      top:0;
+      z-index:1;
+    }
+    tr:last-child td{border-bottom:none}
+    .result-box,.viewer-hero,.ai-panel,.insight-panel{
+      padding:18px;
+      border-radius:22px;
+      background:linear-gradient(180deg,#eff6ff 0%, #ffffff 100%);
+      border:1px solid #bfdbfe;
+      line-height:1.75;
+    }
+    .result-box strong,.viewer-hero strong{
+      display:block;
+      font-size:22px;
+      letter-spacing:-.03em;
+    }
+    .result-meta,.viewer-meta{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin:10px 0 14px;
+    }
+    .rank-card,.viewer-candidate,.viewer-response-card,.insight-item{
+      padding:16px;
+      border-radius:20px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.78);
+    }
+    .rank-card.top,.viewer-candidate.top{
+      border:2px solid rgba(37,99,235,.22);
+      background:linear-gradient(180deg,rgba(239,246,255,.92) 0%, rgba(255,255,255,.94) 100%);
+    }
+    .rank-head,.viewer-candidate-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      margin-bottom:8px;
+    }
+    .score{
+      display:inline-flex;
+      padding:8px 10px;
+      border-radius:999px;
+      background:#eff6ff;
+      color:#1d4ed8;
+      font-size:12px;
+      font-weight:800;
+    }
+    .pills{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 9px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:800;
+    }
+    .pill.ok{background:#dcfce7;color:#166534}
+    .pill.maybe{background:#ffedd5;color:#9a3412}
+    .pill.ng{background:#fee2e2;color:#991b1b}
+    .rank-reason,.viewer-reason{
+      margin-top:10px;
+      color:var(--sub);
+      font-size:13px;
+      line-height:1.7;
+    }
+    .viewer-card h3,.viewer-response-card h3,.ai-panel h3,.insight-panel h3{
+      margin:0 0 10px;
+      font-size:18px;
+    }
+    .hidden{display:none !important}
+
+    @media (max-width:1100px){
+      .layout{grid-template-columns:1fr}
+    }
+    @media (max-width:760px){
+      body{padding:14px}
+      .topbar,.grid-2,.candidate-add,.participant-row,.viewer-response-row,.ai-row{
+        display:grid;
+        grid-template-columns:1fr;
+      }
+      .meta-strip,.actions{justify-content:flex-start}
+      table{min-width:640px}
+    }
+  </style>
 </head>
 <body>
-<div class="shell">
-  <div class="topbar">
-    <div class="brand">
-      <div class="eyebrow">AI Scheduling Ritual</div>
-      <h1>調整様</h1>
-      <div class="lede">編集用と閲覧用をシンプルに切り替えます。閲覧画面では参加者が自分の参加可否だけを更新できます。</div>
+  <div class="shell">
+    <div class="topbar">
+      <div class="brand">
+        <div class="eyebrow">AI Scheduling Ritual</div>
+        <h1>調整様</h1>
+        <div class="lede">編集用と閲覧用をシンプルに切り替えます。閲覧画面では参加者が自分の参加可否だけを更新できます。</div>
+      </div>
+      <div class="meta-strip">
+        <div class="meta-pill">version <span id="versionLabel">0.6.1</span></div>
+        <div id="statusPill" class="status-pill"><span class="status-dot"></span><span id="statusText">未接続</span></div>
+        <div class="meta-pill">event <span id="eventLabel">-</span></div>
+      </div>
     </div>
-    <div class="meta-strip">
-      <div class="meta-pill">version <span id="versionLabel">0.6.0</span></div>
-      <div id="statusPill" class="status-pill"><span class="status-dot"></span><span id="statusText">未接続</span></div>
-      <div class="meta-pill">event <span id="eventLabel">-</span></div>
-    </div>
-  </div>
 
-  <div class="toolbar">
-    <div class="mode-switch" role="tablist" aria-label="screen mode">
-      <button id="editModeBtn" class="mode-btn active" type="button">編集用</button>
-      <button id="viewerModeBtn" class="mode-btn" type="button">閲覧用</button>
-    </div>
-    <div class="actions">
-      <button id="toggleMagicSetupBtn" class="btn-soft" type="button">✨ AIセットアップ</button>
-      <button id="copyEditUrlBtn" class="btn-ghost" type="button">編集用URLをコピー</button>
-      <button id="copyViewerUrlBtn" class="btn-primary" type="button">閲覧用URLをコピー</button>
-    </div>
-  </div>
-
-  <div id="magicSetupPanel" class="ai-panel hidden">
-    <div class="section-head">
-      <div>
-        <h3>✨ AI MAGIC SETUP</h3>
-        <p>自然文から予定名・説明・候補日・参加者をまとめて自動入力します。</p>
+    <div class="toolbar">
+      <div class="mode-switch" role="tablist" aria-label="screen mode">
+        <button id="editModeBtn" class="mode-btn active" type="button">編集用</button>
+        <button id="viewerModeBtn" class="mode-btn" type="button">閲覧用</button>
       </div>
       <div class="actions">
-        <button id="runMagicSetupBtn" class="btn-primary" type="button">AIで流し込む</button>
-        <button id="closeMagicSetupBtn" class="btn-ghost" type="button">閉じる</button>
+        <button id="toggleMagicSetupBtn" class="btn-soft" type="button">✨ AIセットアップ</button>
+        <button id="copyEditUrlBtn" class="btn-ghost" type="button">編集用URLをコピー</button>
+        <button id="copyViewerUrlBtn" class="btn-primary" type="button">閲覧用URLをコピー</button>
       </div>
     </div>
-    <div class="ai-row">
-      <div class="field">
-        <div class="label-row"><label for="magicSetupPrompt">自然文入力</label><span class="hint">例: 来週の月曜の夜に、西浦さんと佐藤さんを呼んで飲み会</span></div>
-        <textarea id="magicSetupPrompt" placeholder="例: 来週の月曜の夜に、西浦さんと佐藤さんを呼んで飲み会"></textarea>
+
+    <div id="magicSetupPanel" class="ai-panel hidden">
+      <div class="section-head">
+        <div>
+          <h3>✨ AI MAGIC SETUP</h3>
+          <p>自然文から予定名・説明・候補日・参加者をまとめて自動入力します。</p>
+        </div>
+        <div class="actions">
+          <button id="runMagicSetupBtn" class="btn-primary" type="button">AIで流し込む</button>
+          <button id="closeMagicSetupBtn" class="btn-ghost" type="button">閉じる</button>
+        </div>
       </div>
-      <div class="stack">
+      <div class="ai-row">
         <div class="field">
-          <div class="label-row"><label for="geminiApiKey">Gemini API Key</label><span class="hint">試作用のみブラウザ保存</span></div>
-          <input id="geminiApiKey" type="password" placeholder="AIza..." />
+          <div class="label-row">
+            <label for="magicSetupPrompt">自然文入力</label>
+            <span class="hint">例: 来週の月曜の夜に、西浦さんと佐藤さんを呼んで飲み会</span>
+          </div>
+          <textarea id="magicSetupPrompt" placeholder="例: 来週の月曜の夜に、西浦さんと佐藤さんを呼んで飲み会"></textarea>
         </div>
-        <div class="small">このプロトタイプではブラウザから Gemini API を直接呼びます。保存先はローカルストレージです。</div>
+        <div class="small">APIキーはHTMLに置かず、Firebase Functions経由で安全に呼び出します。</div>
+      </div>
+    </div>
+
+    <div id="editorScreen">
+      <div class="layout">
+        <main>
+          <section class="panel">
+            <div class="section-head">
+              <div>
+                <h2>予定情報</h2>
+                <p>イベント内容と回答締切日時を編集します。</p>
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="field">
+                <div class="label-row"><label for="title">予定名</label><span class="hint">例：研究打ち合わせ</span></div>
+                <input id="title" placeholder="例：研究打ち合わせ / 定例会議 / 歓迎会" />
+              </div>
+              <div class="field">
+                <div class="label-row"><label for="location">場所 / URL</label><span class="hint">会議室や Zoom URL</span></div>
+                <input id="location" placeholder="例：会議室A / Zoom / 仙台駅前" />
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="field">
+                <div class="label-row"><label for="deadline">回答締切日時</label><span class="hint">この日時までに参加可否を入力</span></div>
+                <input id="deadline" type="datetime-local" />
+              </div>
+              <div class="field">
+                <div class="label-row"><label for="organizer">幹事名</label><span class="hint">主催者 / 連絡窓口</span></div>
+                <input id="organizer" placeholder="例：西浦" />
+              </div>
+            </div>
+            <div class="field">
+              <div class="label-row"><label for="desc">説明</label><span class="hint">目的・持ち物・補足事項</span></div>
+              <textarea id="desc" placeholder="説明"></textarea>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="section-head">
+              <div>
+                <h2>候補日</h2>
+                <p>候補日はここで追加・削除します。</p>
+              </div>
+              <div class="actions">
+                <button id="focusCandidateBtn" class="btn-ghost" type="button">入力欄へ移動</button>
+              </div>
+            </div>
+            <div class="candidate-add">
+              <div class="field">
+                <label for="d">日付</label>
+                <input type="date" id="d" />
+              </div>
+              <div class="field">
+                <label for="t">時間</label>
+                <input type="time" id="t" value="18:00" />
+              </div>
+              <button id="addC" class="btn-primary" type="button">＋ 追加</button>
+            </div>
+            <div id="cList" class="card-list"></div>
+          </section>
+
+          <section class="panel">
+            <div class="section-head">
+              <div>
+                <h2>参加者</h2>
+                <p>参加者一覧を編集します。</p>
+              </div>
+              <button id="addP" class="btn-primary" type="button">＋ 参加者を追加</button>
+            </div>
+            <div id="pList" class="stack"></div>
+          </section>
+
+          <section class="panel">
+            <div class="section-head">
+              <div>
+                <h2>回答一覧</h2>
+                <p>全員の状況を一覧で確認します。</p>
+              </div>
+              <div class="actions">
+                <button id="resetResponsesBtn" class="btn-ghost" type="button">見本に戻す</button>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <div id="table"></div>
+            </div>
+          </section>
+        </main>
+
+        <aside>
+          <section class="panel">
+            <div class="section-head">
+              <div>
+                <h2>結果</h2>
+                <p>最も揉めにくい候補を表示します。</p>
+              </div>
+              <div class="actions">
+                <button id="runAiInsightsBtn" class="btn-soft" type="button">AI分析</button>
+              </div>
+            </div>
+            <div id="result" class="result-box">候補日を入力してください。</div>
+          </section>
+
+          <section class="panel">
+            <div class="section-head">
+              <div>
+                <h2>AI分析</h2>
+                <p>AIが人間らしい判断理由を解説します。</p>
+              </div>
+            </div>
+            <div id="aiInsightsBox" class="insight-panel">
+              <div class="small">「AI分析」を押すと、現在の候補日と参加状況から解説を生成します。</div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="section-head">
+              <div>
+                <h2>ランキング</h2>
+                <p>各候補のスコアと理由です。</p>
+              </div>
+            </div>
+            <div id="ranking" class="ranking"></div>
+          </section>
+        </aside>
+      </div>
+    </div>
+
+    <div id="viewerScreen" class="hidden">
+      <div class="viewer-layout">
+        <section class="panel">
+          <div id="viewerHero" class="viewer-hero"></div>
+        </section>
+
+        <section class="panel">
+          <div class="section-head">
+            <div>
+              <h2>参加可否を更新</h2>
+              <p>自分の名前を選び、参加可否だけを更新します。</p>
+            </div>
+          </div>
+          <div class="viewer-response-card">
+            <div class="field">
+              <div class="label-row">
+                <label for="viewerParticipantSelect">参加者名</label>
+                <span class="hint">自分の名前を選択</span>
+              </div>
+              <select id="viewerParticipantSelect"></select>
+            </div>
+            <div id="viewerResponseEditor" class="viewer-response-list"></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="section-head">
+            <div>
+              <h2>候補一覧</h2>
+              <p>候補と現在の傾向だけを簡潔に表示します。</p>
+            </div>
+          </div>
+          <div id="viewerCandidates" class="viewer-candidate-list"></div>
+        </section>
       </div>
     </div>
   </div>
 
-  <div id="editorScreen">
-    <div class="layout">
-      <main>
-        <section class="panel">
-          <div class="section-head"><div><h2>予定情報</h2><p>イベント内容と回答締切日時を編集します。</p></div></div>
-          <div class="grid-2">
-            <div class="field"><div class="label-row"><label for="title">予定名</label><span class="hint">例：研究打ち合わせ</span></div><input id="title" placeholder="例：研究打ち合わせ / 定例会議 / 歓迎会" /></div>
-            <div class="field"><div class="label-row"><label for="location">場所 / URL</label><span class="hint">会議室や Zoom URL</span></div><input id="location" placeholder="例：会議室A / Zoom / 仙台駅前" /></div>
-          </div>
-          <div class="grid-2">
-            <div class="field"><div class="label-row"><label for="deadline">回答締切日時</label><span class="hint">この日時までに参加可否を入力</span></div><input id="deadline" type="datetime-local" /></div>
-            <div class="field"><div class="label-row"><label for="organizer">幹事名</label><span class="hint">主催者 / 連絡窓口</span></div><input id="organizer" placeholder="例：西浦" /></div>
-          </div>
-          <div class="field"><div class="label-row"><label for="desc">説明</label><span class="hint">目的・持ち物・補足事項</span></div><textarea id="desc" placeholder="説明"></textarea></div>
-        </section>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-        <section class="panel">
-          <div class="section-head"><div><h2>候補日</h2><p>候補日はここで追加・削除します。</p></div><div class="actions"><button id="focusCandidateBtn" class="btn-ghost" type="button">入力欄へ移動</button></div></div>
-          <div class="candidate-add">
-            <div class="field"><label for="d">日付</label><input type="date" id="d"></div>
-            <div class="field"><label for="t">時間</label><input type="time" id="t" value="18:00"></div>
-            <button id="addC" class="btn-primary" type="button">＋ 追加</button>
-          </div>
-          <div id="cList" class="card-list"></div>
-        </section>
+    const APP_VERSION = "0.6.1";
+    const MAGIC_SETUP_URL = "https://magicsetup-npmruhbaga-uc.a.run.app";
+    const AI_INSIGHTS_URL = "https://us-central1-chousei-sama-85eed.cloudfunctions.net/aiInsights";
 
-        <section class="panel">
-          <div class="section-head"><div><h2>参加者</h2><p>参加者一覧を編集します。</p></div><button id="addP" class="btn-primary" type="button">＋ 参加者を追加</button></div>
-          <div id="pList" class="stack"></div>
-        </section>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBTXGKYfhPoPqOwgwzoC78N1R7f0He67j0",
+      authDomain: "chousei-sama-85eed.firebaseapp.com",
+      projectId: "chousei-sama-85eed",
+      storageBucket: "chousei-sama-85eed.firebasestorage.app",
+      messagingSenderId: "547215861134",
+      appId: "1:547215861134:web:67d95b90375aea65ceb0df"
+    };
 
-        <section class="panel">
-          <div class="section-head"><div><h2>回答一覧</h2><p>全員の状況を一覧で確認します。</p></div><div class="actions"><button id="resetResponsesBtn" class="btn-ghost" type="button">見本に戻す</button></div></div>
-          <div class="table-wrap"><div id="table"></div></div>
-        </section>
-      </main>
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-      <aside>
-        <section class="panel"><div class="section-head"><div><h2>結果</h2><p>最も揉めにくい候補を表示します。</p></div><div class="actions"><button id="runAiInsightsBtn" class="btn-soft" type="button">AI分析</button></div></div><div id="result" class="result-box">候補日を入力してください。</div></section>
-        <section class="panel"><div class="section-head"><div><h2>AI分析</h2><p>Gemini が人間らしい判断理由を解説します。</p></div></div><div id="aiInsightsBox" class="insight-panel"><div class="small">「AI分析」を押すと、現在の候補日と参加状況から解説を生成します。</div></div></section>
-        <section class="panel"><div class="section-head"><div><h2>ランキング</h2><p>各候補のスコアと理由です。</p></div></div><div id="ranking" class="ranking"></div></section>
-      </aside>
-    </div>
-  </div>
+    const $ = (id) => document.getElementById(id);
 
-  <div id="viewerScreen" class="hidden">
-    <div class="viewer-layout">
-      <section class="panel"><div id="viewerHero" class="viewer-hero"></div></section>
-      <section class="panel">
-        <div class="section-head"><div><h2>参加可否を更新</h2><p>自分の名前を選び、参加可否だけを更新します。</p></div></div>
-        <div class="viewer-card">
-          <div class="field"><div class="label-row"><label for="viewerParticipantSelect">参加者名</label><span class="hint">自分の名前を選択</span></div><select id="viewerParticipantSelect"></select></div>
-          <div id="viewerResponseEditor" class="viewer-response-list"></div>
+    let isApplyingRemote = false;
+    let saveTimer = null;
+    let previewTimer = null;
+    let firstSnapshot = true;
+    let screenMode = "edit";
+    let viewerSelectedParticipantId = "";
+    let aiInsights = null;
+
+    const state = {
+      appVersion: APP_VERSION,
+      title: "",
+      location: "",
+      deadline: "",
+      organizer: "",
+      desc: "",
+      candidates: [],
+      participants: [],
+      responses: {}
+    };
+
+    function uid() {
+      return Math.random().toString(36).slice(2, 9);
+    }
+
+    function esc(s) {
+      return String(s ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function getEventId() {
+      const url = new URL(location.href);
+      let id = url.searchParams.get("event");
+      if (!id) {
+        id = Math.random().toString(36).slice(2);
+        url.searchParams.set("event", id);
+        history.replaceState({}, "", url.toString());
+      }
+      return id;
+    }
+
+    function getScreenMode() {
+      const url = new URL(location.href);
+      return url.searchParams.get("screen") === "viewer" ? "viewer" : "edit";
+    }
+
+    function buildUrl(mode) {
+      const url = new URL(location.href);
+      url.searchParams.set("event", eventId);
+      url.searchParams.set("screen", mode === "viewer" ? "viewer" : "edit");
+      return url.toString();
+    }
+
+    function updateUrlForScreen(mode) {
+      const url = new URL(location.href);
+      url.searchParams.set("event", eventId);
+      url.searchParams.set("screen", mode === "viewer" ? "viewer" : "edit");
+      history.replaceState({}, "", url.toString());
+    }
+
+    async function copyText(text, successMessage) {
+      try {
+        await navigator.clipboard.writeText(text);
+        setCompactStatus(successMessage, "ok");
+      } catch (e) {
+        console.error(e);
+        setCompactStatus("コピー失敗", "err");
+      }
+    }
+
+    function setCompactStatus(text, kind = "") {
+      $("statusText").textContent = text;
+      $("statusPill").className = `status-pill ${kind}`.trim();
+    }
+
+    function getTokyoNowText() {
+      return new Intl.DateTimeFormat("ja-JP", {
+        timeZone: "Asia/Tokyo",
+        dateStyle: "full",
+        timeStyle: "short"
+      }).format(new Date());
+    }
+
+    function stripJsonFence(text) {
+      return String(text || "")
+        .replace(/^```json\s*/i, "")
+        .replace(/^```\s*/i, "")
+        .replace(/```\s*$/i, "")
+        .trim();
+    }
+
+    function normalizeCandidate(item) {
+      if (!item) return null;
+      if (item.date && item.time) {
+        return { id: uid(), date: item.date, time: item.time };
+      }
+      if (item.datetime) {
+        const d = new Date(item.datetime);
+        if (!isNaN(d)) {
+          const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+            .toISOString()
+            .slice(0, 16);
+          return { id: uid(), date: local.slice(0, 10), time: local.slice(11, 16) };
+        }
+      }
+      return null;
+    }
+
+    function getActiveInputState() {
+      const el = document.activeElement;
+      if (!el || !(el instanceof HTMLInputElement)) return null;
+      if (el.dataset.pname) {
+        return {
+          type: "pname",
+          id: el.dataset.pname,
+          start: el.selectionStart ?? null,
+          end: el.selectionEnd ?? null
+        };
+      }
+      if (el.dataset.prole) {
+        return {
+          type: "prole",
+          id: el.dataset.prole,
+          start: el.selectionStart ?? null,
+          end: el.selectionEnd ?? null
+        };
+      }
+      return null;
+    }
+
+    function restoreActiveInputState(active) {
+      if (!active) return;
+      const selector = active.type === "pname"
+        ? `[data-pname="${active.id}"]`
+        : `[data-prole="${active.id}"]`;
+      const el = document.querySelector(selector);
+      if (!el) return;
+      el.focus();
+      if (typeof active.start === "number" && typeof active.end === "number") {
+        try {
+          el.setSelectionRange(active.start, active.end);
+        } catch {}
+      }
+    }
+
+    function ensure() {
+      state.participants.forEach((p) => {
+        if (!state.responses[p.id]) state.responses[p.id] = {};
+        state.candidates.forEach((c) => {
+          if (!state.responses[p.id][c.id]) state.responses[p.id][c.id] = "maybe";
+        });
+        Object.keys(state.responses[p.id]).forEach((cid) => {
+          if (!state.candidates.some((c) => c.id === cid)) delete state.responses[p.id][cid];
+        });
+      });
+
+      Object.keys(state.responses).forEach((pid) => {
+        if (!state.participants.some((p) => p.id === pid)) delete state.responses[pid];
+      });
+
+      if (state.participants.length && !viewerSelectedParticipantId) {
+        viewerSelectedParticipantId = state.participants[0].id;
+      }
+      if (
+        viewerSelectedParticipantId &&
+        !state.participants.some((p) => p.id === viewerSelectedParticipantId)
+      ) {
+        viewerSelectedParticipantId = state.participants[0]?.id || "";
+      }
+    }
+
+    function serializeState() {
+      ensure();
+      return {
+        appVersion: APP_VERSION,
+        title: state.title,
+        location: state.location,
+        deadline: state.deadline,
+        organizer: state.organizer,
+        desc: state.desc,
+        candidates: state.candidates,
+        participants: state.participants,
+        responses: state.responses
+      };
+    }
+
+    async function save() {
+      if (isApplyingRemote) return;
+      try {
+        setCompactStatus("保存中", "warn");
+        await setDoc(doc(db, "events", eventId), serializeState(), { merge: true });
+        setCompactStatus("接続中", "ok");
+      } catch (e) {
+        console.error(e);
+        setCompactStatus("保存失敗", "err");
+      }
+    }
+
+    function scheduleSave() {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(save, 650);
+    }
+
+    function schedulePreviewRefresh() {
+      clearTimeout(previewTimer);
+      previewTimer = setTimeout(() => {
+        renderViewer();
+        renderResult();
+        renderRanking();
+      }, 180);
+    }
+
+    function subscribe() {
+      setCompactStatus("接続中...", "warn");
+      onSnapshot(doc(db, "events", eventId), (snap) => {
+        try {
+          if (snap.exists()) {
+            const incoming = JSON.stringify(snap.data());
+            const current = JSON.stringify(serializeState());
+            if (!firstSnapshot && incoming === current) {
+              setCompactStatus("同期中", "ok");
+              return;
+            }
+            const active = getActiveInputState();
+            isApplyingRemote = true;
+            Object.assign(state, snap.data());
+            ensure();
+            render();
+            restoreActiveInputState(active);
+            setCompactStatus(firstSnapshot ? "接続成功" : "同期中", "ok");
+          } else {
+            render();
+            save();
+            setCompactStatus("新規イベント", "ok");
+          }
+        } catch (e) {
+          console.error(e);
+          setCompactStatus("描画エラー", "err");
+        } finally {
+          firstSnapshot = false;
+          isApplyingRemote = false;
+        }
+      }, (error) => {
+        console.error(error);
+        setCompactStatus("接続エラー", "err");
+      });
+    }
+
+    function calc() {
+      return state.candidates
+        .map((c) => {
+          let score = 0;
+          let ok = 0;
+          let maybe = 0;
+          let ng = 0;
+          let importantOk = 0;
+          state.participants.forEach((p) => {
+            const v = state.responses[p.id]?.[c.id];
+            const w = p.important ? 3 : 1;
+            if (v === "ok") {
+              score += 2 * w;
+              ok++;
+              if (p.important) importantOk++;
+            }
+            if (v === "maybe") {
+              score += 1 * w;
+              maybe++;
+            }
+            if (v === "ng") {
+              score -= 2 * w;
+              ng++;
+            }
+          });
+          return { c, score, ok, maybe, ng, importantOk };
+        })
+        .sort((a, b) => b.score - a.score);
+    }
+
+    function buildViewerFlavor(item, index) {
+      if (index === 0 && item.importantOk > 0) {
+        return "第一候補らしく、予定表のセンターを静かに確保しています。忙しい方にも配慮しやすく、まずはこの日から声をかけると角が立ちにくそうです。";
+      }
+      if (index === 0) {
+        return "全体のバランスがよく、実務ではかなり優秀です。派手すぎず、でも仕事はできるタイプの候補です。";
+      }
+      if (index === 1 && item.maybe >= item.ok && item.maybe > 0) {
+        return "第二候補ですが、まだ伸びしろがあります。あと一声で前に出るタイプなので、予定が揺れている方にはやさしく確認するとよさそうです。";
+      }
+      if (index === 1) {
+        return "控えめに見えて、いざという時に頼れる候補です。本命が難しい時の着地先として、かなり品があります。";
+      }
+      if (index === 2 && item.ng >= 2) {
+        return "少し向かい風ですが、完全退場には惜しい候補です。参加が難しい方へのひと言を添えると、空気はぐっと柔らかくなります。";
+      }
+      if (index === 2) {
+        return "第三候補として静かに待機中です。主役ではないものの、いざという時に場をつなぐ役回りは十分こなせます。";
+      }
+      if (item.ng >= 2) {
+        return "この候補はやや手強めです。ただ、事情のある方を責めずに扱えるなら、代替案として残しておく価値はあります。";
+      }
+      return "無理のある方に配慮を添えながら進めれば、穏当に着地しやすい候補です。";
+    }
+
+    function renderAiInsights() {
+      if (!aiInsights) {
+        $("aiInsightsBox").innerHTML =
+          '<div class="small">「AI分析」を押すと、現在の候補日と参加状況から解説を生成します。</div>';
+        return;
+      }
+      const alternatives = Array.isArray(aiInsights.alternatives) ? aiInsights.alternatives : [];
+      const cautions = Array.isArray(aiInsights.cautions) ? aiInsights.cautions : [];
+      $("aiInsightsBox").innerHTML = `
+        <h3>${esc(aiInsights.headline || "AI分析結果")}</h3>
+        <div class="small">${esc(aiInsights.summary || "")}</div>
+        <div class="insight-list">
+          ${alternatives.map(item => `
+            <div class="insight-item">
+              <strong>${esc(item.label || "代替案")}</strong>
+              <div class="small">${esc(item.reason || "")}</div>
+            </div>
+          `).join("")}
+          ${cautions.map(item => `
+            <div class="insight-item">
+              <strong>注意点</strong>
+              <div class="small">${esc(item)}</div>
+            </div>
+          `).join("")}
         </div>
-      </section>
-      <section class="panel"><div class="section-head"><div><h2>候補一覧</h2><p>候補と現在の傾向だけを簡潔に表示します。</p></div></div><div id="viewerCandidates" class="viewer-candidate-list"></div></section>
-    </div>
-  </div>
-</div>
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
-
-const APP_VERSION = "0.6.0";
-const GEMINI_MODEL = "gemini-2.5-flash";
-const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
-const firebaseConfig = {
-  apiKey: "AIzaSyBTXGKYfhPoPqOwgwzoC78N1R7f0He67j0",
-  authDomain: "chousei-sama-85eed.firebaseapp.com",
-  projectId: "chousei-sama-85eed",
-  storageBucket: "chousei-sama-85eed.firebasestorage.app",
-  messagingSenderId: "547215861134",
-  appId: "1:547215861134:web:67d95b90375aea65ceb0df"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-let isApplyingRemote = false;
-let saveTimer = null;
-let previewTimer = null;
-let firstSnapshot = true;
-let screenMode = "edit";
-let viewerSelectedParticipantId = "";
-let aiInsights = null;
-
-function uid(){ return Math.random().toString(36).slice(2,9); }
-function esc(s){ return String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;"); }
-function availabilityLabel(v){ return v === 'ok' ? '○ 参加可' : v === 'maybe' ? '△ 調整可' : '× 不可'; }
-function getEventId(){ const url = new URL(location.href); let id = url.searchParams.get("event"); if(!id){ id = Math.random().toString(36).slice(2); url.searchParams.set("event", id); history.replaceState({}, "", url.toString()); } return id; }
-function getScreenMode(){ const url = new URL(location.href); return url.searchParams.get("screen") === "viewer" ? "viewer" : "edit"; }
-function buildUrl(mode){ const url = new URL(location.href); url.searchParams.set("event", eventId); url.searchParams.set("screen", mode === "viewer" ? "viewer" : "edit"); return url.toString(); }
-function updateUrlForScreen(mode){ const url = new URL(location.href); url.searchParams.set("event", eventId); url.searchParams.set("screen", mode === "viewer" ? "viewer" : "edit"); history.replaceState({}, "", url.toString()); }
-async function copyText(text, successMessage){ try{ await navigator.clipboard.writeText(text); setCompactStatus(successMessage, "ok"); }catch(e){ console.error(e); setCompactStatus("コピー失敗", "err"); } }
-function getTokyoNowText(){ return new Intl.DateTimeFormat('ja-JP',{ timeZone:'Asia/Tokyo', dateStyle:'full', timeStyle:'short' }).format(new Date()); }
-function normalizeCandidate(item){
-  if(!item) return null;
-  if(item.date && item.time) return { id: uid(), date: item.date, time: item.time };
-  if(item.datetime){
-    const d = new Date(item.datetime);
-    if(!isNaN(d)){
-      const iso = new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,16);
-      return { id: uid(), date: iso.slice(0,10), time: iso.slice(11,16) };
+      `;
     }
-  }
-  return null;
-}
-function stripJsonFence(text){
-  return text.replace(/^```json\s*/i,'').replace(/^```\s*/i,'').replace(/```\s*$/,'').trim();
-}
-function loadGeminiKey(){ return localStorage.getItem('gemini_api_key') || ''; }
-function saveGeminiKey(key){ localStorage.setItem('gemini_api_key', key); }
 
-const eventId = getEventId();
-screenMode = getScreenMode();
-document.getElementById("versionLabel").textContent = APP_VERSION;
-document.getElementById("eventLabel").textContent = eventId;
-geminiApiKey.value = loadGeminiKey();
-
-function setCompactStatus(text, kind=""){ const pill = document.getElementById("statusPill"); const textEl = document.getElementById("statusText"); textEl.textContent = text; pill.className = `status-pill ${kind}`.trim(); }
-
-const state = { appVersion: APP_VERSION, title: "", location: "", deadline: "", organizer: "", desc: "", candidates: [], participants: [], responses: {} };
-
-function ensure(){
-  state.participants.forEach((p, pi) => {
-    if(!state.responses[p.id]) state.responses[p.id] = {};
-    state.candidates.forEach((c, ci) => {
-      if(!state.responses[p.id][c.id]){
-        state.responses[p.id][c.id] = "maybe";
+    function renderEditorTable() {
+      if (!state.candidates.length || !state.participants.length) {
+        $("table").innerHTML = '<div class="small" style="padding:14px">候補日と参加者を追加してください。</div>';
+        return;
       }
-    });
-    Object.keys(state.responses[p.id]).forEach(cid => {
-      if(!state.candidates.some(c => c.id === cid)) delete state.responses[p.id][cid];
-    });
-  });
-  Object.keys(state.responses).forEach(pid => {
-    if(!state.participants.some(p => p.id === pid)) delete state.responses[pid];
-  });
-  if(state.participants.length && !viewerSelectedParticipantId) viewerSelectedParticipantId = state.participants[0].id;
-  if(viewerSelectedParticipantId && !state.participants.some(p => p.id === viewerSelectedParticipantId)) viewerSelectedParticipantId = state.participants[0]?.id || "";
-}
-function serializeState(){ ensure(); return { appVersion: APP_VERSION, title: state.title, location: state.location, deadline: state.deadline, organizer: state.organizer, desc: state.desc, candidates: state.candidates, participants: state.participants, responses: state.responses }; }
 
-async function save(){
-  if(isApplyingRemote) return;
-  try{ setCompactStatus("保存中", "warn"); await setDoc(doc(db, "events", eventId), serializeState(), { merge:true }); setCompactStatus("接続中", "ok"); }
-  catch(e){ console.error(e); setCompactStatus("保存失敗", "err"); }
-}
-function scheduleSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(save, 650); }
-function schedulePreviewRefresh(){ clearTimeout(previewTimer); previewTimer = setTimeout(() => { renderViewer(); renderResult(); renderRanking(); }, 180); }
-function subscribe(){
-  setCompactStatus("接続中...", "warn");
-  onSnapshot(doc(db, "events", eventId), (snap) => {
-    try{
-      if(snap.exists()){
-        const incoming = JSON.stringify(snap.data());
-        const current = JSON.stringify(serializeState());
-        if(!firstSnapshot && incoming === current){ setCompactStatus("同期中", "ok"); return; }
-        isApplyingRemote = true;
-        Object.assign(state, snap.data());
-        ensure();
-        render();
-        setCompactStatus(firstSnapshot ? "接続成功" : "同期中", "ok");
-      }else{
-        render();
-        save();
-        setCompactStatus("新規イベント", "ok");
-      }
-    }catch(e){ console.error(e); setCompactStatus("描画エラー", "err"); }
-    finally{ firstSnapshot = false; isApplyingRemote = false; }
-  }, (error) => { console.error(error); setCompactStatus("接続エラー", "err"); });
-}
+      let html = '<table><thead><tr><th>参加者</th>';
+      state.candidates.forEach((c) => {
+        html += `<th>${esc(c.date)}<br><span class="small">${esc(c.time || "")}</span></th>`;
+      });
+      html += "</tr></thead><tbody>";
 
-function calc(){
-  return state.candidates.map(c => {
-    let score = 0, ok = 0, maybe = 0, ng = 0, importantOk = 0;
-    state.participants.forEach(p => {
-      const v = state.responses[p.id]?.[c.id];
-      const w = p.important ? 3 : 1;
-      if(v === 'ok'){ score += 2 * w; ok++; if(p.important) importantOk++; }
-      if(v === 'maybe'){ score += 1 * w; maybe++; }
-      if(v === 'ng'){ score -= 2 * w; ng++; }
-    });
-    return { c, score, ok, maybe, ng, importantOk };
-  }).sort((a,b) => b.score - a.score);
-}
+      state.participants.forEach((p) => {
+        html += `<tr><td><strong>${esc(p.name || "参加者")}</strong><br><span class="small">${esc(p.role || "役割未設定")}</span></td>`;
+        state.candidates.forEach((c) => {
+          const v = state.responses[p.id]?.[c.id] || "maybe";
+          html += `<td>
+            <select class="status-select" data-response="${p.id}|${c.id}">
+              <option value="ok" ${v === "ok" ? "selected" : ""}>○</option>
+              <option value="maybe" ${v === "maybe" ? "selected" : ""}>△</option>
+              <option value="ng" ${v === "ng" ? "selected" : ""}>×</option>
+            </select>
+          </td>`;
+        });
+        html += "</tr>";
+      });
 
-function renderEditor(){
-  title.value = state.title || "";
-  location.value = state.location || "";
-  deadline.value = state.deadline || "";
-  organizer.value = state.organizer || "";
-  desc.value = state.desc || "";
+      html += "</tbody></table>";
+      $("table").innerHTML = html;
 
-  cList.innerHTML = state.candidates.map((c, i) => `<div class="list-item"><div><strong>候補${i+1}: ${esc(c.date)} ${esc(c.time || "")}</strong><small>回答表とランキングに反映中</small></div><button class="btn-danger" type="button" data-cdel="${c.id}">削除</button></div>`).join("");
-  document.querySelectorAll("[data-cdel]").forEach(btn => btn.onclick = () => { state.candidates = state.candidates.filter(c => c.id !== btn.dataset.cdel); render(); scheduleSave(); });
-
-  pList.innerHTML = state.participants.map((p) => `<div class="participant-row"><input value="${esc(p.name)}" data-pname="${p.id}" placeholder="参加者名"><input value="${esc(p.role || "")}" data-prole="${p.id}" placeholder="役割"><label class="toggle-chip"><input type="checkbox" data-pimp="${p.id}" ${p.important ? "checked" : ""}> 重要人物</label><button class="btn-danger" type="button" data-pdel="${p.id}">削除</button></div>`).join("");
-  document.querySelectorAll("[data-pname]").forEach(input => {
-    input.oninput = () => { const t = state.participants.find(p => p.id === input.dataset.pname); if(t){ t.name = input.value; schedulePreviewRefresh(); scheduleSave(); } };
-    input.onblur = () => { renderEditorTable(); renderViewer(); };
-  });
-  document.querySelectorAll("[data-prole]").forEach(input => {
-    input.oninput = () => { const t = state.participants.find(p => p.id === input.dataset.prole); if(t){ t.role = input.value; schedulePreviewRefresh(); scheduleSave(); } };
-    input.onblur = () => { renderEditorTable(); renderViewer(); };
-  });
-  document.querySelectorAll("[data-pimp]").forEach(input => input.onchange = () => { const t = state.participants.find(p => p.id === input.dataset.pimp); if(t){ t.important = input.checked; renderEditorTable(); renderViewer(); renderResult(); renderRanking(); scheduleSave(); } });
-  document.querySelectorAll("[data-pdel]").forEach(btn => btn.onclick = () => { state.participants = state.participants.filter(p => p.id !== btn.dataset.pdel); delete state.responses[btn.dataset.pdel]; render(); scheduleSave(); });
-
-  renderEditorTable();
-  renderResult();
-  renderRanking();
-}
-
-function renderEditorTable(){
-  if(!state.candidates.length || !state.participants.length){ table.innerHTML = '<div class="small" style="padding:14px">候補日と参加者を追加してください。</div>'; return; }
-  let html = '<table><thead><tr><th>参加者</th>';
-  state.candidates.forEach(c => { html += `<th>${esc(c.date)}<br><span class="small">${esc(c.time || "")}</span></th>`; });
-  html += '</tr></thead><tbody>';
-  state.participants.forEach(p => {
-    html += `<tr><td><strong>${esc(p.name || "参加者")}</strong><br><span class="small">${esc(p.role || "役割未設定")}</span></td>`;
-    state.candidates.forEach(c => {
-      const v = state.responses[p.id]?.[c.id] || 'maybe';
-      html += `<td><select class="status-select" data-response="${p.id}|${c.id}"><option value="ok" ${v==='ok'?'selected':''}>○</option><option value="maybe" ${v==='maybe'?'selected':''}>△</option><option value="ng" ${v==='ng'?'selected':''}>×</option></select></td>`;
-    });
-    html += '</tr>';
-  });
-  html += '</tbody></table>';
-  table.innerHTML = html;
-  document.querySelectorAll("[data-response]").forEach(select => select.onchange = () => { const [pid, cid] = select.dataset.response.split("|"); state.responses[pid][cid] = select.value; renderResult(); renderRanking(); renderViewer(); scheduleSave(); });
-}
-
-function renderResult(){
-  const ranked = calc();
-  if(!ranked.length){ result.innerHTML = '候補日がありません。'; return; }
-  const top = ranked[0];
-  result.innerHTML = `<strong>${esc(state.title || '予定名未設定')}</strong><div class="result-meta"><span class="meta-chip">場所: ${esc(state.location || '未設定')}</span><span class="meta-chip">回答締切日時: ${esc(state.deadline || '未設定')}</span><span class="meta-chip">幹事: ${esc(state.organizer || '未設定')}</span><span class="meta-chip">保存版: ${esc(state.appVersion || APP_VERSION)}</span></div><div style="font-size:20px;font-weight:800;margin-bottom:8px;">第一候補: ${esc(top.c.date)} ${esc(top.c.time || '')}</div><div class="small">最も波風が立ちにくい候補です。</div>`;
-}
-
-function renderRanking(){
-  const ranked = calc();
-  ranking.innerHTML = ranked.map((item, index) => `<div class="rank-card ${index===0?'top':''}"><div class="rank-head"><div><strong>${index===0?'👑 第一候補':`候補 ${index+1}`}</strong><div class="small">${esc(item.c.date)} ${esc(item.c.time || '')}</div></div><div class="score">Score ${item.score}</div></div><div class="pills"><span class="pill ok">○ ${item.ok}</span><span class="pill maybe">△ ${item.maybe}</span><span class="pill ng">× ${item.ng}</span></div><div class="rank-reason">重要人物参加可: ${item.importantOk}人。${item.ng >= 2 ? '少し荒れそうです。' : '比較的穏当に決めやすい候補です。'}</div></div>`).join("");
-}
-
-function buildViewerFlavor(item, index){
-  if(index === 0 && item.importantOk > 0){
-    return '第一候補らしく、予定表のセンターを静かに確保しています。忙しい方にも配慮しやすく、まずはこの日から声をかけると角が立ちにくそうです。';
-  }
-  if(index === 0){
-    return '全体のバランスがよく、実務ではかなり優秀です。派手すぎず、でも仕事はできるタイプの候補です。';
-  }
-  if(index === 1 && item.maybe >= item.ok && item.maybe > 0){
-    return '第二候補ですが、まだ伸びしろがあります。あと一声で前に出るタイプなので、予定が揺れている方にはやさしく確認するとよさそうです。';
-  }
-  if(index === 1){
-    return '控えめに見えて、いざという時に頼れる候補です。本命が難しい時の着地先として、かなり品があります。';
-  }
-  if(index === 2 && item.ng >= 2){
-    return '少し向かい風ですが、完全退場には惜しい候補です。参加が難しい方へのひと言を添えると、空気はぐっと柔らかくなります。';
-  }
-  if(index === 2){
-    return '第三候補として静かに待機中です。主役ではないものの、いざという時に場をつなぐ役回りは十分こなせます。';
-  }
-  if(item.ng >= 2){
-    return 'この候補はやや手強めです。ただ、事情のある方を責めずに扱えるなら、代替案として残しておく価値はあります。';
-  }
-  return '無理のある方に配慮を添えながら進めれば、穏当に着地しやすい候補です。';
-}
-
-function renderViewer(){
-  const ranked = calc();
-  const top = ranked[0];
-  viewerHero.innerHTML = `<strong>${esc(state.title || '予定名未設定')}</strong><div class="viewer-meta"><span class="meta-chip">場所: ${esc(state.location || '未設定')}</span><span class="meta-chip">回答締切日時: ${esc(state.deadline || '未設定')}</span><span class="meta-chip">幹事: ${esc(state.organizer || '未設定')}</span></div><div style="font-size:22px;font-weight:800;margin-bottom:8px;">${top ? `第一候補: ${esc(top.c.date)} ${esc(top.c.time || '')}` : '候補日未設定'}</div><div class="small" style="line-height:1.8;">${esc(state.desc || '説明は未入力です。')}</div>`;
-
-  viewerCandidates.innerHTML = ranked.length ? ranked.map((item, index) => `<div class="viewer-candidate ${index===0?'top':''}"><div class="viewer-candidate-head"><div><strong>${index===0?'👑 第一候補':index===1?'🥈 第二候補':index===2?'🥉 第三候補':`候補 ${index+1}`}</strong><div class="small">${esc(item.c.date)} ${esc(item.c.time || '')}</div></div><div class="score">Score ${item.score}</div></div><div class="pills"><span class="pill ok">○ ${item.ok}</span><span class="pill maybe">△ ${item.maybe}</span><span class="pill ng">× ${item.ng}</span></div><div class="viewer-reason">${esc(buildViewerFlavor(item, index))}</div></div>`).join("") : '<div class="small">候補日がありません。</div>';
-
-  viewerParticipantSelect.innerHTML = state.participants.map(p => `<option value="${p.id}" ${p.id===viewerSelectedParticipantId?'selected':''}>${esc(p.name || '参加者')}</option>`).join('');
-  if(!state.participants.length || !state.candidates.length){ viewerResponseEditor.innerHTML = '<div class="small">参加者と候補日が揃うと回答できます。</div>'; return; }
-  const participant = state.participants.find(p => p.id === viewerSelectedParticipantId) || state.participants[0];
-  if(participant) viewerSelectedParticipantId = participant.id;
-  viewerResponseEditor.innerHTML = state.candidates.map(c => {
-    const v = state.responses[participant.id]?.[c.id] || 'maybe';
-    return `<div class="viewer-response-card"><h3>${esc(c.date)} ${esc(c.time || '')}</h3><div class="viewer-response-row"><div class="small">${esc(participant.name || '参加者')} さんの参加状況</div><select class="status-select" data-viewer-response="${participant.id}|${c.id}"><option value="ok" ${v==='ok'?'selected':''}>○ 参加可</option><option value="maybe" ${v==='maybe'?'selected':''}>△ 調整可</option><option value="ng" ${v==='ng'?'selected':''}>× 不可</option></select></div></div>`;
-  }).join('');
-  document.querySelectorAll('[data-viewer-response]').forEach(select => select.onchange = () => { const [pid, cid] = select.dataset.viewerResponse.split('|'); state.responses[pid][cid] = select.value; renderViewer(); renderEditorTable(); renderResult(); renderRanking(); scheduleSave(); });
-}
-
-function applyScreenMode(mode){
-  screenMode = mode === 'viewer' ? 'viewer' : 'edit';
-  editorScreen.classList.toggle('hidden', screenMode !== 'edit');
-  viewerScreen.classList.toggle('hidden', screenMode !== 'viewer');
-  editModeBtn.classList.toggle('active', screenMode === 'edit');
-  viewerModeBtn.classList.toggle('active', screenMode === 'viewer');
-  updateUrlForScreen(screenMode);
-}
-
-function renderAiInsights(){
-  if(!aiInsights){
-    aiInsightsBox.innerHTML = '<div class="small">「AI分析」を押すと、現在の候補日と参加状況から解説を生成します。</div>';
-    return;
-  }
-  const alternatives = Array.isArray(aiInsights.alternatives) ? aiInsights.alternatives : [];
-  const cautions = Array.isArray(aiInsights.cautions) ? aiInsights.cautions : [];
-  aiInsightsBox.innerHTML = `
-    <h3>${esc(aiInsights.headline || 'AI分析結果')}</h3>
-    <div class="small">${esc(aiInsights.summary || '')}</div>
-    <div class="insight-list">
-      ${alternatives.map(item => `<div class="insight-item"><strong>${esc(item.label || '代替案')}</strong><div class="small">${esc(item.reason || '')}</div></div>`).join('')}
-      ${cautions.map(item => `<div class="insight-item"><strong>注意点</strong><div class="small">${esc(item)}</div></div>`).join('')}
-    </div>
-  `;
-}
-
-async function runAiInsights(){
-  const apiKey = geminiApiKey.value.trim() || loadGeminiKey();
-  if(!apiKey){
-    setCompactStatus('Geminiキー未入力', 'err');
-    magicSetupPanel.classList.remove('hidden');
-    geminiApiKey.focus();
-    return;
-  }
-  if(!state.candidates.length || !state.participants.length){
-    setCompactStatus('候補日と参加者が必要', 'err');
-    return;
-  }
-  saveGeminiKey(apiKey);
-  setCompactStatus('AI分析中', 'warn');
-  aiInsightsBox.innerHTML = '<div class="small">AI分析を実行しています...</div>';
-
-  const ranked = calc().map(item => ({
-    label: `${item.c.date} ${item.c.time || ''}`.trim(),
-    score: item.score,
-    ok: item.ok,
-    maybe: item.maybe,
-    ng: item.ng,
-    importantOk: item.importantOk
-  }));
-  const participantSummary = state.participants.map(p => ({
-    name: p.name || '参加者',
-    role: p.role || '',
-    important: !!p.important,
-    responses: state.candidates.map(c => ({ candidate: `${c.date} ${c.time || ''}`.trim(), value: state.responses[p.id]?.[c.id] || 'maybe' }))
-  }));
-
-  const schema = {
-    type: 'OBJECT',
-    properties: {
-      headline: { type: 'STRING' },
-      summary: { type: 'STRING' },
-      alternatives: {
-        type: 'ARRAY',
-        items: {
-          type: 'OBJECT',
-          properties: {
-            label: { type: 'STRING' },
-            reason: { type: 'STRING' }
-          },
-          required: ['label','reason']
-        }
-      },
-      cautions: { type: 'ARRAY', items: { type: 'STRING' } }
-    },
-    required: ['headline','summary','alternatives','cautions']
-  };
-
-  const instruction = `あなたは「調整様」という日本語の会議日程調整アシスタントです。文体は、皮肉ではなくエッジの効いた笑いを少量、相手への気配りを適度に織り交ぜたものにしてください。人を傷つける表現、見下し、嫌味、攻撃性は不可です。クスッとする比喩や軽いユーモアは使ってよいですが、忙しい人や参加できない人への配慮を必ず一言添えてください。候補日を点数順に並べるだけではなく、重要人物が参加できる候補、NGが多い候補、代替案として残す価値がある候補を短く明快に説明してください。headline は少し印象的に、summary は2〜4文で、alternatives.reason は実務に役立つコメントにしてください。出力は必ずJSONのみ。`;
-  try{
-    const res = await fetch(GEMINI_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey
-      },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: instruction }] },
-        contents: [{ role: 'user', parts: [{ text: JSON.stringify({
-          title: state.title,
-          deadline: state.deadline,
-          location: state.location,
-          organizer: state.organizer,
-          rankedCandidates: ranked,
-          participants: participantSummary
-        }) }] }],
-        generationConfig: {
-          responseMimeType: 'application/json',
-          responseJsonSchema: schema,
-          temperature: 0.3
-        }
-      })
-    });
-    if(!res.ok){
-      const errText = await res.text();
-      throw new Error(errText || `HTTP ${res.status}`);
+      document.querySelectorAll("[data-response]").forEach((select) => {
+        select.onchange = () => {
+          const [pid, cid] = select.dataset.response.split("|");
+          if (!state.responses[pid]) state.responses[pid] = {};
+          state.responses[pid][cid] = select.value;
+          renderResult();
+          renderRanking();
+          renderViewer();
+          scheduleSave();
+        };
+      });
     }
-    const data = await res.json();
-    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    aiInsights = JSON.parse(stripJsonFence(rawText));
-    renderAiInsights();
-    setCompactStatus('AI分析完了', 'ok');
-  }catch(e){
-    console.error(e);
-    aiInsightsBox.innerHTML = '<div class="small">AI分析に失敗しました。APIキーとネットワークを確認してください。</div>';
-    setCompactStatus('AI分析失敗', 'err');
-  }
-}
 
-function applyMagicSetup(data){
-  if(data.title) state.title = data.title;
-  if(data.description) state.desc = data.description;
-  if(data.location) state.location = data.location;
-  if(data.responseDeadline) state.deadline = data.responseDeadline;
-  if(Array.isArray(data.participants) && data.participants.length){
-    state.participants = data.participants.map((p, idx) => {
-      if(typeof p === 'string') return { id: uid(), name: p, role: '', important: false };
-      return { id: uid(), name: p.name || `参加者${idx+1}`, role: p.role || '', important: !!p.important };
-    });
-  }
-  if(Array.isArray(data.candidates) && data.candidates.length){
-    const normalized = data.candidates.map(normalizeCandidate).filter(Boolean);
-    if(normalized.length) state.candidates = normalized;
-  }
-  state.responses = {};
-  render();
-  scheduleSave();
-}
-
-async function runMagicSetup(){
-  const apiKey = geminiApiKey.value.trim();
-  const prompt = magicSetupPrompt.value.trim();
-  if(!apiKey){ setCompactStatus('Geminiキー未入力', 'err'); geminiApiKey.focus(); return; }
-  if(!prompt){ setCompactStatus('自然文を入力してください', 'err'); magicSetupPrompt.focus(); return; }
-  saveGeminiKey(apiKey);
-  setCompactStatus('AI解析中', 'warn');
-
-  const nowText = getTokyoNowText();
-  const schema = {
-    type: 'OBJECT',
-    properties: {
-      title: { type: 'STRING' },
-      description: { type: 'STRING' },
-      location: { type: 'STRING' },
-      responseDeadline: { type: 'STRING', description: 'YYYY-MM-DDTHH:MM format if inferable, else empty string' },
-      participants: {
-        type: 'ARRAY',
-        items: {
-          type: 'OBJECT',
-          properties: {
-            name: { type: 'STRING' },
-            role: { type: 'STRING' },
-            important: { type: 'BOOLEAN' }
-          },
-          required: ['name']
-        }
-      },
-      candidates: {
-        type: 'ARRAY',
-        items: {
-          type: 'OBJECT',
-          properties: {
-            date: { type: 'STRING', description: 'YYYY-MM-DD' },
-            time: { type: 'STRING', description: 'HH:MM 24h' }
-          },
-          required: ['date','time']
-        }
+    function renderResult() {
+      const ranked = calc();
+      if (!ranked.length) {
+        $("result").innerHTML = "候補日がありません。";
+        return;
       }
-    },
-    required: ['title','description','participants','candidates']
-  };
-
-  const instruction = `あなたは日本語の会議・会食調整アシスタントです。現在時刻は ${nowText} です。タイムゾーンは Asia/Tokyo です。ユーザーの自然文を解釈し、予定作成フォームに流し込めるJSONのみを返してください。\n- 「来週の月曜」「夜」などの相対表現は絶対日時に変換する\n- 夜は原則 19:00、昼は 12:00、朝は 09:00、夕方は 18:00 とする\n- 候補日が1つしか明示されていない場合は、その1候補だけ返す\n- 参加者名は敬称込みで自然に抽出する\n- タイトルは簡潔で自然な日本語にする\n- 説明は1-2文の短い文にする\n- 不明な項目は空文字にする`;
-
-  try{
-    const res = await fetch(GEMINI_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey
-      },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: instruction }] },
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: {
-          responseMimeType: 'application/json',
-          responseSchema: schema,
-          temperature: 0.2
-        }
-      })
-    });
-    if(!res.ok){
-      const errText = await res.text();
-      throw new Error(errText || `HTTP ${res.status}`);
+      const top = ranked[0];
+      $("result").innerHTML = `
+        <strong>${esc(state.title || "予定名未設定")}</strong>
+        <div class="result-meta">
+          <span class="meta-chip">場所: ${esc(state.location || "未設定")}</span>
+          <span class="meta-chip">回答締切日時: ${esc(state.deadline || "未設定")}</span>
+          <span class="meta-chip">幹事: ${esc(state.organizer || "未設定")}</span>
+          <span class="meta-chip">保存版: ${esc(state.appVersion || APP_VERSION)}</span>
+        </div>
+        <div style="font-size:20px;font-weight:800;margin-bottom:8px;">第一候補: ${esc(top.c.date)} ${esc(top.c.time || "")}</div>
+        <div class="small">最も波風が立ちにくい候補です。</div>
+      `;
     }
-    const data = await res.json();
-    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const parsed = JSON.parse(stripJsonFence(rawText));
-    applyMagicSetup(parsed);
-    magicSetupPanel.classList.add('hidden');
-    setCompactStatus('AI流し込み完了', 'ok');
-  }catch(e){
-    console.error(e);
-    setCompactStatus('AI解析失敗', 'err');
-  }
-}
 
-function render(){ ensure(); renderEditor(); renderViewer(); renderAiInsights(); applyScreenMode(screenMode); }
+    function renderRanking() {
+      const ranked = calc();
+      $("ranking").innerHTML = ranked.map((item, index) => `
+        <div class="rank-card ${index === 0 ? "top" : ""}">
+          <div class="rank-head">
+            <div>
+              <strong>${index === 0 ? "👑 第一候補" : `候補 ${index + 1}`}</strong>
+              <div class="small">${esc(item.c.date)} ${esc(item.c.time || "")}</div>
+            </div>
+            <div class="score">Score ${item.score}</div>
+          </div>
+          <div class="pills">
+            <span class="pill ok">○ ${item.ok}</span>
+            <span class="pill maybe">△ ${item.maybe}</span>
+            <span class="pill ng">× ${item.ng}</span>
+          </div>
+          <div class="rank-reason">重要人物参加可: ${item.importantOk}人。${item.ng >= 2 ? "少し荒れそうです。" : "比較的穏当に決めやすい候補です。"}</div>
+        </div>
+      `).join("");
+    }
 
-focusCandidateBtn.onclick = () => d.focus();
-addC.onclick = () => { if(!d.value) return; state.candidates.push({ id: uid(), date: d.value, time: t.value || '18:00' }); render(); scheduleSave(); };
-addP.onclick = () => { state.participants.push({ id: uid(), name: '参加者', role: '', important: false }); render(); scheduleSave(); };
-resetResponsesBtn.onclick = () => { state.responses = {}; render(); scheduleSave(); };
+    function renderViewer() {
+      const ranked = calc();
+      const top = ranked[0];
 
-title.oninput = e => { state.title = e.target.value; renderResult(); renderViewer(); scheduleSave(); };
-location.oninput = e => { state.location = e.target.value; renderResult(); renderViewer(); scheduleSave(); };
-deadline.oninput = e => { state.deadline = e.target.value; renderResult(); renderViewer(); scheduleSave(); };
-organizer.oninput = e => { state.organizer = e.target.value; renderResult(); renderViewer(); scheduleSave(); };
-desc.oninput = e => { state.desc = e.target.value; renderViewer(); scheduleSave(); };
-viewerParticipantSelect.onchange = e => { viewerSelectedParticipantId = e.target.value; renderViewer(); };
-editModeBtn.onclick = () => applyScreenMode('edit');
-viewerModeBtn.onclick = () => applyScreenMode('viewer');
-copyEditUrlBtn.onclick = () => copyText(buildUrl('edit'), '編集用URLをコピー');
-copyViewerUrlBtn.onclick = () => copyText(buildUrl('viewer'), '閲覧用URLをコピー');
-toggleMagicSetupBtn.onclick = () => magicSetupPanel.classList.toggle('hidden');
-closeMagicSetupBtn.onclick = () => magicSetupPanel.classList.add('hidden');
-runMagicSetupBtn.onclick = () => runMagicSetup();
-runAiInsightsBtn.onclick = () => runAiInsights();
-geminiApiKey.onchange = e => saveGeminiKey(e.target.value.trim());
+      $("viewerHero").innerHTML = `
+        <strong>${esc(state.title || "予定名未設定")}</strong>
+        <div class="viewer-meta">
+          <span class="meta-chip">場所: ${esc(state.location || "未設定")}</span>
+          <span class="meta-chip">回答締切日時: ${esc(state.deadline || "未設定")}</span>
+          <span class="meta-chip">幹事: ${esc(state.organizer || "未設定")}</span>
+        </div>
+        <div style="font-size:22px;font-weight:800;margin-bottom:8px;">${top ? `第一候補: ${esc(top.c.date)} ${esc(top.c.time || "")}` : "候補日未設定"}</div>
+        <div class="small" style="line-height:1.8;">${esc(state.desc || "説明は未入力です。")}</div>
+      `;
 
-render();
-setCompactStatus('接続待機中', 'warn');
-subscribe();
-</script>
+      $("viewerCandidates").innerHTML = ranked.length ? ranked.map((item, index) => `
+        <div class="viewer-candidate ${index === 0 ? "top" : ""}">
+          <div class="viewer-candidate-head">
+            <div>
+              <strong>${
+                index === 0 ? "👑 第一候補" :
+                index === 1 ? "🥈 第二候補" :
+                index === 2 ? "🥉 第三候補" :
+                `候補 ${index + 1}`
+              }</strong>
+              <div class="small">${esc(item.c.date)} ${esc(item.c.time || "")}</div>
+            </div>
+            <div class="score">Score ${item.score}</div>
+          </div>
+          <div class="pills">
+            <span class="pill ok">○ ${item.ok}</span>
+            <span class="pill maybe">△ ${item.maybe}</span>
+            <span class="pill ng">× ${item.ng}</span>
+          </div>
+          <div class="viewer-reason">${esc(buildViewerFlavor(item, index))}</div>
+        </div>
+      `).join("") : '<div class="small">候補日がありません。</div>';
+
+      $("viewerParticipantSelect").innerHTML = state.participants.map((p) => `
+        <option value="${p.id}" ${p.id === viewerSelectedParticipantId ? "selected" : ""}>${esc(p.name || "参加者")}</option>
+      `).join("");
+
+      if (!state.participants.length || !state.candidates.length) {
+        $("viewerResponseEditor").innerHTML = '<div class="small">参加者と候補日が揃うと回答できます。</div>';
+        return;
+      }
+
+      const participant = state.participants.find((p) => p.id === viewerSelectedParticipantId) || state.participants[0];
+      if (participant) viewerSelectedParticipantId = participant.id;
+
+      $("viewerResponseEditor").innerHTML = state.candidates.map((c) => {
+        const v = state.responses[participant.id]?.[c.id] || "maybe";
+        return `
+          <div class="viewer-response-card">
+            <h3>${esc(c.date)} ${esc(c.time || "")}</h3>
+            <div class="viewer-response-row">
+              <div class="small">${esc(participant.name || "参加者")} さんの参加状況</div>
+              <select class="status-select" data-viewer-response="${participant.id}|${c.id}">
+                <option value="ok" ${v === "ok" ? "selected" : ""}>○ 参加可</option>
+                <option value="maybe" ${v === "maybe" ? "selected" : ""}>△ 調整可</option>
+                <option value="ng" ${v === "ng" ? "selected" : ""}>× 不可</option>
+              </select>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      document.querySelectorAll("[data-viewer-response]").forEach((select) => {
+        select.onchange = () => {
+          const [pid, cid] = select.dataset.viewerResponse.split("|");
+          if (!state.responses[pid]) state.responses[pid] = {};
+          state.responses[pid][cid] = select.value;
+          renderViewer();
+          renderEditorTable();
+          renderResult();
+          renderRanking();
+          scheduleSave();
+        };
+      });
+    }
+
+    function renderEditor() {
+      $("title").value = state.title || "";
+      $("location").value = state.location || "";
+      $("deadline").value = state.deadline || "";
+      $("organizer").value = state.organizer || "";
+      $("desc").value = state.desc || "";
+
+      $("cList").innerHTML = state.candidates.map((c, i) => `
+        <div class="list-item">
+          <div>
+            <strong>候補${i + 1}: ${esc(c.date)} ${esc(c.time || "")}</strong>
+            <div class="small">回答表とランキングに反映中</div>
+          </div>
+          <button class="btn-danger" type="button" data-cdel="${c.id}">削除</button>
+        </div>
+      `).join("");
+
+      document.querySelectorAll("[data-cdel]").forEach((btn) => {
+        btn.onclick = () => {
+          state.candidates = state.candidates.filter((c) => c.id !== btn.dataset.cdel);
+          render();
+          scheduleSave();
+        };
+      });
+
+      const active = getActiveInputState();
+
+      $("pList").innerHTML = state.participants.map((p) => `
+        <div class="participant-row">
+          <input value="${esc(p.name)}" data-pname="${p.id}" placeholder="参加者名">
+          <input value="${esc(p.role || "")}" data-prole="${p.id}" placeholder="役割">
+          <label class="toggle-chip"><input type="checkbox" data-pimp="${p.id}" ${p.important ? "checked" : ""}> 重要人物</label>
+          <button class="btn-danger" type="button" data-pdel="${p.id}">削除</button>
+        </div>
+      `).join("");
+
+      document.querySelectorAll("[data-pname]").forEach((input) => {
+        input.oninput = () => {
+          const target = state.participants.find((p) => p.id === input.dataset.pname);
+          if (target) {
+            target.name = input.value;
+            schedulePreviewRefresh();
+            scheduleSave();
+          }
+        };
+        input.onblur = () => {
+          renderEditorTable();
+          renderViewer();
+        };
+      });
+
+      document.querySelectorAll("[data-prole]").forEach((input) => {
+        input.oninput = () => {
+          const target = state.participants.find((p) => p.id === input.dataset.prole);
+          if (target) {
+            target.role = input.value;
+            schedulePreviewRefresh();
+            scheduleSave();
+          }
+        };
+        input.onblur = () => {
+          renderEditorTable();
+          renderViewer();
+        };
+      });
+
+      document.querySelectorAll("[data-pimp]").forEach((input) => {
+        input.onchange = () => {
+          const target = state.participants.find((p) => p.id === input.dataset.pimp);
+          if (target) {
+            target.important = input.checked;
+            renderEditorTable();
+            renderViewer();
+            renderResult();
+            renderRanking();
+            scheduleSave();
+          }
+        };
+      });
+
+      document.querySelectorAll("[data-pdel]").forEach((btn) => {
+        btn.onclick = () => {
+          state.participants = state.participants.filter((p) => p.id !== btn.dataset.pdel);
+          delete state.responses[btn.dataset.pdel];
+          render();
+          scheduleSave();
+        };
+      });
+
+      restoreActiveInputState(active);
+      renderEditorTable();
+      renderResult();
+      renderRanking();
+    }
+
+    function applyScreenMode(mode) {
+      screenMode = mode === "viewer" ? "viewer" : "edit";
+      $("editorScreen").classList.toggle("hidden", screenMode !== "edit");
+      $("viewerScreen").classList.toggle("hidden", screenMode !== "viewer");
+      $("editModeBtn").classList.toggle("active", screenMode === "edit");
+      $("viewerModeBtn").classList.toggle("active", screenMode === "viewer");
+      updateUrlForScreen(screenMode);
+    }
+
+    function applyMagicSetup(data) {
+      if (data.title) state.title = data.title;
+      if (data.description) state.desc = data.description;
+      if (data.location) state.location = data.location;
+      if (data.responseDeadline) state.deadline = data.responseDeadline;
+      if (Array.isArray(data.participants) && data.participants.length) {
+        state.participants = data.participants.map((p, idx) => {
+          if (typeof p === "string") {
+            return { id: uid(), name: p, role: "", important: false };
+          }
+          return {
+            id: uid(),
+            name: p.name || `参加者${idx + 1}`,
+            role: p.role || "",
+            important: !!p.important
+          };
+        });
+      }
+      if (Array.isArray(data.candidates) && data.candidates.length) {
+        const normalized = data.candidates.map(normalizeCandidate).filter(Boolean);
+        if (normalized.length) state.candidates = normalized;
+      }
+      state.responses = {};
+      aiInsights = null;
+      render();
+      scheduleSave();
+    }
+
+    async function runMagicSetup() {
+      const prompt = $("magicSetupPrompt").value.trim();
+      if (!prompt) {
+        setCompactStatus("自然文を入力してください", "err");
+        $("magicSetupPrompt").focus();
+        return;
+      }
+
+      setCompactStatus("AI解析中", "warn");
+
+      try {
+        const res = await fetch(MAGIC_SETUP_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            prompt,
+            nowText: getTokyoNowText()
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || `HTTP ${res.status}`);
+        }
+
+        const parsed = JSON.parse(stripJsonFence(data.text || "{}"));
+        applyMagicSetup(parsed);
+        $("magicSetupPanel").classList.add("hidden");
+        setCompactStatus("AI流し込み完了", "ok");
+      } catch (e) {
+        console.error(e);
+        setCompactStatus("AI解析失敗", "err");
+      }
+    }
+
+    async function runAiInsights() {
+      if (!state.candidates.length || !state.participants.length) {
+        setCompactStatus("候補日と参加者が必要", "err");
+        return;
+      }
+
+      setCompactStatus("AI分析中", "warn");
+      $("aiInsightsBox").innerHTML = '<div class="small">AI分析を実行しています...</div>';
+
+      const ranked = calc().map((item) => ({
+        label: `${item.c.date} ${item.c.time || ""}`.trim(),
+        score: item.score,
+        ok: item.ok,
+        maybe: item.maybe,
+        ng: item.ng,
+        importantOk: item.importantOk
+      }));
+
+      const participantSummary = state.participants.map((p) => ({
+        name: p.name || "参加者",
+        role: p.role || "",
+        important: !!p.important,
+        responses: state.candidates.map((c) => ({
+          candidate: `${c.date} ${c.time || ""}`.trim(),
+          value: state.responses[p.id]?.[c.id] || "maybe"
+        }))
+      }));
+
+      try {
+        const res = await fetch(AI_INSIGHTS_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            title: state.title,
+            deadline: state.deadline,
+            location: state.location,
+            organizer: state.organizer,
+            rankedCandidates: ranked,
+            participants: participantSummary
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || `HTTP ${res.status}`);
+        }
+
+        aiInsights = JSON.parse(stripJsonFence(data.text || "{}"));
+        renderAiInsights();
+        setCompactStatus("AI分析完了", "ok");
+      } catch (e) {
+        console.error(e);
+        $("aiInsightsBox").innerHTML = '<div class="small">AI分析に失敗しました。Functions URL とネットワークを確認してください。</div>';
+        setCompactStatus("AI分析失敗", "err");
+      }
+    }
+
+    function render() {
+      ensure();
+      renderEditor();
+      renderViewer();
+      renderAiInsights();
+      applyScreenMode(screenMode);
+    }
+
+    const eventId = getEventId();
+    screenMode = getScreenMode();
+    $("versionLabel").textContent = APP_VERSION;
+    $("eventLabel").textContent = eventId;
+
+    $("focusCandidateBtn").onclick = () => $("d").focus();
+
+    $("addC").onclick = () => {
+      if (!$("d").value) return;
+      state.candidates.push({
+        id: uid(),
+        date: $("d").value,
+        time: $("t").value || "18:00"
+      });
+      render();
+      scheduleSave();
+    };
+
+    $("addP").onclick = () => {
+      state.participants.push({
+        id: uid(),
+        name: "参加者",
+        role: "",
+        important: false
+      });
+      render();
+      scheduleSave();
+    };
+
+    $("resetResponsesBtn").onclick = () => {
+      state.responses = {};
+      render();
+      scheduleSave();
+    };
+
+    $("title").oninput = (e) => {
+      state.title = e.target.value;
+      renderResult();
+      renderViewer();
+      scheduleSave();
+    };
+    $("location").oninput = (e) => {
+      state.location = e.target.value;
+      renderResult();
+      renderViewer();
+      scheduleSave();
+    };
+    $("deadline").oninput = (e) => {
+      state.deadline = e.target.value;
+      renderResult();
+      renderViewer();
+      scheduleSave();
+    };
+    $("organizer").oninput = (e) => {
+      state.organizer = e.target.value;
+      renderResult();
+      renderViewer();
+      scheduleSave();
+    };
+    $("desc").oninput = (e) => {
+      state.desc = e.target.value;
+      renderViewer();
+      scheduleSave();
+    };
+
+    $("viewerParticipantSelect").onchange = (e) => {
+      viewerSelectedParticipantId = e.target.value;
+      renderViewer();
+    };
+
+    $("editModeBtn").onclick = () => applyScreenMode("edit");
+    $("viewerModeBtn").onclick = () => applyScreenMode("viewer");
+    $("copyEditUrlBtn").onclick = () => copyText(buildUrl("edit"), "編集用URLをコピー");
+    $("copyViewerUrlBtn").onclick = () => copyText(buildUrl("viewer"), "閲覧用URLをコピー");
+    $("toggleMagicSetupBtn").onclick = () => $("magicSetupPanel").classList.toggle("hidden");
+    $("closeMagicSetupBtn").onclick = () => $("magicSetupPanel").classList.add("hidden");
+    $("runMagicSetupBtn").onclick = () => runMagicSetup();
+    $("runAiInsightsBtn").onclick = () => runAiInsights();
+
+    render();
+    setCompactStatus("接続待機中", "warn");
+    subscribe();
+  </script>
 </body>
 </html>
