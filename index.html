@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>調整様 v0.6.1</title>
+  <title>調整様 v0.6.2-debug</title>
   <style>
     :root{
       --bg:#f3f6fb;
@@ -1236,9 +1236,11 @@
           })
         });
 
-        const data = await res.json();
+        const raw = await res.text();
+        let data = {};
+        try { data = JSON.parse(raw); } catch {}
         if (!res.ok) {
-          throw new Error(data.error || `HTTP ${res.status}`);
+          throw new Error(data.error || raw || `HTTP ${res.status}`);
         }
 
         const parsed = JSON.parse(stripJsonFence(data.text || "{}"));
@@ -1295,9 +1297,11 @@
           })
         });
 
-        const data = await res.json();
+        const raw = await res.text();
+        let data = {};
+        try { data = JSON.parse(raw); } catch {}
         if (!res.ok) {
-          throw new Error(data.error || `HTTP ${res.status}`);
+          throw new Error(data.error || raw || `HTTP ${res.status}`);
         }
 
         aiInsights = JSON.parse(stripJsonFence(data.text || "{}"));
