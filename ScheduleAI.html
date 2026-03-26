@@ -39,9 +39,7 @@
     input,textarea,select,button{font:inherit}
     input,textarea,select{width:100%;border:1px solid var(--line);background:#fff;border-radius:12px;padding:12px 14px;color:var(--text);outline:none}
     textarea{min-height:88px;resize:vertical}
-    .candidate-row{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin-bottom:10px;align-items:end}
-    .candidate-card{padding:14px;border:1px solid var(--line);border-radius:14px;background:#fcfdff;display:flex;align-items:center;justify-content:space-between;gap:10px}
-    .candidate-card small{display:block;color:var(--sub);margin-top:4px}
+    .candidate-card{padding:14px;border:1px solid var(--line);border-radius:14px;background:#fcfdff;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
     .btn{border:none;border-radius:12px;padding:12px 16px;cursor:pointer;font-weight:700}
     .btn-primary{background:var(--accent);color:#fff}
     .btn-soft{background:#eef2ff;color:#3730a3}
@@ -54,76 +52,58 @@
     .chip{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:7px 11px;font-size:12px;font-weight:700;background:#f1f5f9;color:#334155;border:1px solid #e2e8f0}
     .responses-table{width:100%;border-collapse:collapse;border-radius:16px;border:1px solid var(--line);background:#fff}
     .responses-table th,.responses-table td{border-bottom:1px solid #edf2f7;padding:12px 10px;text-align:left;font-size:14px;vertical-align:middle}
-    .responses-table thead th{background:#f8fafc;font-size:13px;color:#475467}
-    .status-select{min-width:90px;padding:9px 10px}
     .status-pill{display:inline-flex;align-items:center;justify-content:center;min-width:48px;padding:6px 10px;border-radius:999px;font-weight:700;font-size:12px}
     .ok{background:#dcfce7;color:#166534}.maybe{background:#ffedd5;color:#9a3412}.ng{background:#fee2e2;color:#991b1b}
     .rank-card{border:1px solid var(--line);border-radius:16px;padding:16px;background:#fff}
     .rank-top{border:2px solid rgba(37,99,235,.25);background:linear-gradient(180deg,#f8fbff 0%,#fff 100%)}
-    .rank-card .topline{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
-    .score{display:inline-flex;padding:8px 12px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-weight:800;font-size:13px}
-    .meta{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 6px}.reason{margin:10px 0 0;color:var(--sub);line-height:1.65;font-size:14px}
-    .side-stack{display:grid;gap:20px}.callout{padding:16px;border-radius:16px;background:#f8fafc;border:1px solid var(--line);line-height:1.65;color:#334155}
     .summary-box{padding:18px;border-radius:16px;background:linear-gradient(180deg,#eff6ff 0%,#fff 100%);border:1px solid #bfdbfe}
-    .small{color:var(--sub);font-size:13px}
-    .footer-note,.banner{padding:12px 14px;border-radius:14px;font-size:13px;line-height:1.6}
-    .footer-note{margin-top:18px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412}
-    .banner{margin-bottom:16px;background:#f8fafc;border:1px solid var(--line);color:#334155}
-    .banner.warn{background:#fff7ed;border-color:#fed7aa;color:#9a3412}
+    .banner{padding:12px 14px;border-radius:14px;font-size:13px;line-height:1.6;margin-bottom:16px;background:#f8fafc;border:1px solid var(--line);color:#334155}
+    .banner.warn{background:#fff1f2;border-color:#fda4af;color:#9f1239}
     .banner.ok{background:#ecfdf5;border-color:#bbf7d0;color:#166534}
-    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
-    .linkbox{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .linkbox input{flex:1;min-width:280px}
     @media (max-width:1080px){.hero,.layout{grid-template-columns:1fr}}
-    @media (max-width:760px){.app{padding:14px}.grid-2,.candidate-row,.participant-row,.hero-stats{grid-template-columns:1fr}.responses-table{display:block;overflow-x:auto}}
+    @media (max-width:760px){.app{padding:14px}.participant-row,.hero-stats{grid-template-columns:1fr}.responses-table{display:block;overflow-x:auto}}
   </style>
 </head>
 <body>
   <div class="app">
-    <div id="statusBanner" class="banner">Firestore 接続を確認中...</div>
+    <div id="statusBanner" class="banner">Firestore 接続準備中...</div>
 
     <section class="hero">
       <div class="panel hero-card">
         <div class="eyebrow">👑 調整様｜誰も揉めない日程、出します</div>
         <h1>空気を読み、波風を避け、<br>妥当な日程をお告げします</h1>
-        <p>完全な正解ではなく、<b>誰も揉めにくい着地点</b>を選びます。重要人物・全体最適・幹事負担の3視点から、最も穏当な候補を提示します。</p>
+        <p>重要人物・全体最適・幹事負担の3視点から、最も穏当な候補を提示します。</p>
         <div class="hero-stats">
           <div class="stat"><strong id="statParticipants">0人</strong><span>参列者</span></div>
           <div class="stat"><strong id="statCandidates">0件</strong><span>候補日</span></div>
           <div class="stat"><strong id="statMode">偉い人優先</strong><span>裁定モード</span></div>
-          <div class="stat"><strong id="statSync">準備中</strong><span>同期状態</span></div>
+          <div class="stat"><strong id="statSync">待機中</strong><span>同期状態</span></div>
         </div>
       </div>
       <div class="panel hero-side">
-        <div class="mode-box"><h3>⭐ 偉い人優先の御意向</h3><p>重要人物の出席を厚く尊重します。現実は現実として扱います。</p></div>
-        <div class="mode-box"><h3>⚖ 万人に等しき裁定</h3><p>全員を平等に集計し、最大多数が無理なく参加できる日を上位に出します。</p></div>
-        <div class="mode-box"><h3>🧘 幹事救済のご配慮</h3><p>△の少なさ・未回答の影響・ばらつきを踏まえ、確定しやすさを重視します。</p></div>
+        <div class="mode-box"><h3>⭐ 偉い人優先</h3><p>重要人物の出席を厚く尊重します。</p></div>
+        <div class="mode-box"><h3>⚖ フラット</h3><p>全員を平等に集計し、最大多数の日を優先します。</p></div>
+        <div class="mode-box"><h3>🧘 幹事最適</h3><p>調整のしやすさと確定しやすさを重視します。</p></div>
       </div>
     </section>
 
     <div class="layout">
       <main>
         <section class="panel section">
-          <div class="section-head">
-            <div><h2>共有と同期</h2><p>Firestore 接続時は、このURLで同じイベントを共同編集できます。</p></div>
-            <span class="chip" id="eventIdChip">event: checking...</span>
-          </div>
+          <div class="section-head"><div><h2>共有と同期</h2></div><span class="chip" id="eventIdChip">event: ...</span></div>
           <div class="field">
             <label for="shareUrl">共有URL</label>
             <div class="linkbox">
-              <input id="shareUrl" readonly value="URLを取得中..." />
+              <input id="shareUrl" readonly value="URL取得中..." />
               <button class="btn btn-ghost" id="copyLinkBtn">URLコピー</button>
               <button class="btn btn-warning" id="newEventBtn">新しいイベント</button>
             </div>
           </div>
-          <div class="callout">お使いのFirebaseプロジェクト (<span class="mono">chousei-sama-85eed</span>) に接続されています。</div>
+          <div class="callout">Firebase プロジェクト (<span class="mono">chousei-sama-85eed</span>)</div>
         </section>
 
         <section class="panel section">
-          <div class="section-head">
-            <div><h2>ご案件の設定</h2><p>調整対象をご入力ください。調整様が状況を把握いたします。</p></div>
-            <span class="chip">MVP</span>
-          </div>
+          <div class="section-head"><div><h2>ご案件の設定</h2></div><span class="chip">MVP</span></div>
           <div class="field"><label for="eventTitle">件名</label><input id="eventTitle" value="研究打ち合わせ" /></div>
           <div class="field"><label for="eventDescription">趣旨</label><textarea id="eventDescription">新年度の研究計画と役割分担の確認。</textarea></div>
           <div class="grid-2">
@@ -137,20 +117,17 @@
         </section>
 
         <section class="panel section">
-          <div class="section-head"><div><h2>候補日の奉納</h2><p>追加すると、お告げに反映されます。</p></div>
-            <button class="btn btn-soft" id="addCandidateBtn">＋ 候補日を奉納</button></div>
-          <div id="candidateFormArea"></div>
+          <div class="section-head"><div><h2>候補日の奉納</h2></div><button class="btn btn-soft" id="addCandidateBtn">＋ 候補日を追加</button></div>
           <div id="candidateList"></div>
         </section>
 
         <section class="panel section">
-          <div class="section-head"><div><h2>ご参集の皆様</h2><p>⭐はご意向が強く反映されます。</p></div>
-            <button class="btn btn-soft" id="addParticipantBtn">＋ 参列者を追加</button></div>
+          <div class="section-head"><div><h2>ご参集の皆様</h2></div><button class="btn btn-soft" id="addParticipantBtn">＋ 参列者を追加</button></div>
           <div class="participants" id="participantList"></div>
         </section>
 
         <section class="panel section">
-          <div class="section-head"><div><h2>ご都合の申告</h2><p>○ / △ / × を入力すると裁定が更新され、Firestore接続時は自動保存されます。</p></div>
+          <div class="section-head"><div><h2>ご都合の申告</h2></div>
             <div class="actions">
               <button class="btn btn-ghost" id="sampleDataBtn">見本を降ろす</button>
               <button class="btn btn-primary" id="runAiBtn">お告げを更新</button>
@@ -161,30 +138,17 @@
       </main>
 
       <aside class="side-stack">
-        <section class="panel section">
-          <div class="section-head"><div><h2>調整様のお告げ</h2><p>妥当性と理由を提示します。</p></div></div>
-          <div class="ranking" id="rankingArea"></div>
-        </section>
-
-        <section class="panel section">
-          <div class="section-head"><div><h2>最終のお達し</h2><p>穏当な着地案です。</p></div></div>
-          <div class="summary-box" id="summaryBox"></div>
-          <div class="footer-note">本番運用ではセキュリティルールを「eventIdを知っている人のみ」に制限することをお勧めします。</div>
-        </section>
+        <section class="panel section"><div class="section-head"><div><h2>調整様のお告げ</h2></div></div><div class="ranking" id="rankingArea"></div></section>
+        <section class="panel section"><div class="section-head"><div><h2>最終のお達し</h2></div></div><div class="summary-box" id="summaryBox"></div></section>
       </aside>
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
-    import {
-      getAuth, signInAnonymously
-    } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
-    import {
-      initializeFirestore, doc, getDoc, setDoc, serverTimestamp, onSnapshot, enableNetwork
-    } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
+    import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
+    import { initializeFirestore, doc, setDoc, serverTimestamp, onSnapshot, enableNetwork } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
 
-    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyBTXGKYfhPoPqOwgwzoC78N1R7f0He67j0",
       authDomain: "chousei-sama-85eed.firebaseapp.com",
@@ -195,352 +159,172 @@
       measurementId: "G-SKJVWM98KD"
     };
 
-    const defaultState = () => ({
-      eventTitle: '研究打ち合わせ',
-      eventDescription: '新年度の研究計画と役割分担の確認。',
-      mode: 'important',
-      importantWeight: 3,
-      candidates: [
-        { id: uid(), date: new Date().toISOString().split('T')[0], time: '18:00' }
-      ],
-      participants: [
-        { id: uid(), name: '西浦先生', role: '教授', important: true },
-        { id: uid(), name: '佐藤さん', role: '助教', important: false }
-      ],
-      responses: {},
-      updatedAt: null
-    });
+    let state = {
+      eventTitle: '研究打ち合わせ', eventDescription: '詳細を入力してください。',
+      mode: 'important', importantWeight: 3,
+      candidates: [{ id: 'c1', date: new Date().toISOString().split('T')[0], time: '18:00' }],
+      participants: [{ id: 'p1', name: '幹事', role: '主催者', important: true }],
+      responses: {}
+    };
 
-    let state = defaultState();
-    let db = null;
-    let auth = null;
-    let eventId = null;
-    let isFirestoreReady = false;
-    let isApplyingRemote = false;
-    let saveTimer = null;
-    let unsubscribe = null;
+    let db, auth, eventId, isFirestoreReady = false, isApplyingRemote = false, saveTimer = null;
 
-    // より堅牢なUID生成
-    function uid(){ 
-      try { return crypto.randomUUID().slice(0,8); }
-      catch(e) { return Math.random().toString(36).slice(2,10); }
-    }
-    
+    function uid(){ return Math.random().toString(36).slice(2,10); }
     function esc(s){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;'); }
     function fmt(c){ return `${c.date} ${c.time}`; }
     function wd(d){ const a=['日','月','火','水','木','金','土']; const x=new Date(d); return isNaN(x) ? '' : `${a[x.getDay()]}曜`; }
     function qs(name){ return new URL(location.href).searchParams.get(name); }
 
-    function setQueryEvent(id){ 
-      try {
-        const url = new URL(location.href); 
-        url.searchParams.set('event', id); 
-        history.replaceState({}, '', url.toString()); 
-      } catch (e) {
-        console.warn("URL更新制限:", e.message);
-      }
-    }
-
     function updateBanner(text, kind=''){
       const el = document.getElementById('statusBanner');
-      if (el) {
-        el.className = `banner ${kind}`.trim();
-        el.textContent = text;
-      }
-    }
-
-    function ensureResponses(){
-      state.participants.forEach((p,pi)=>{
-        if(!state.responses[p.id]) state.responses[p.id] = {};
-        state.candidates.forEach((c,ci)=>{
-          if(!state.responses[p.id][c.id]) state.responses[p.id][c.id]='ok';
-        });
-      });
-      // 不要な回答の削除
-      Object.keys(state.responses).forEach(pid=>{
-        if(!state.participants.some(p=>p.id===pid)) delete state.responses[pid];
-      });
-    }
-
-    function serializeState(){
-      ensureResponses();
-      return {
-        eventTitle: state.eventTitle,
-        eventDescription: state.eventDescription,
-        mode: state.mode,
-        importantWeight: state.importantWeight,
-        candidates: state.candidates,
-        participants: state.participants,
-        responses: state.responses,
-        updatedAt: serverTimestamp()
-      };
-    }
-
-    function applyState(data){
-      isApplyingRemote = true;
-      state.eventTitle = data.eventTitle || '名称未設定';
-      state.eventDescription = data.eventDescription || '';
-      state.mode = data.mode || 'important';
-      state.importantWeight = Number(data.importantWeight || 3);
-      state.candidates = Array.isArray(data.candidates) ? data.candidates : [];
-      state.participants = Array.isArray(data.participants) ? data.participants : [];
-      state.responses = data.responses || {};
-      ensureResponses();
-      render();
-      isApplyingRemote = false;
-    }
-
-    async function saveStateNow(){
-      if(!isFirestoreReady || !eventId || isApplyingRemote) return;
-      try {
-        await setDoc(doc(db, 'events', eventId), serializeState(), { merge: true });
-        const statSync = document.getElementById('statSync');
-        if (statSync) statSync.textContent = '保存済';
-      } catch (err) {
-        console.error("保存失敗:", err);
-      }
-    }
-
-    function scheduleSave(){
-      if(!isFirestoreReady || isApplyingRemote) return;
-      const statSync = document.getElementById('statSync');
-      if (statSync) statSync.textContent = '待機中';
-      clearTimeout(saveTimer);
-      saveTimer = setTimeout(() => {
-        saveStateNow().catch(err => {
-          console.error(err);
-          updateBanner(`保存失敗: ${err.message}`, 'warn');
-        });
-      }, 800);
+      if (el) { el.className = `banner ${kind}`.trim(); el.textContent = text; }
     }
 
     async function initFirestore(){
-      updateBanner('Firestore 接続を開始します...', 'ok');
-      
-      const timeout = setTimeout(() => {
-        if (!isFirestoreReady) {
-          updateBanner('接続タイムアウト。ローカルモードで動作します。', 'warn');
-          isFirestoreReady = false;
-          render();
-        }
-      }, 10000); // 10秒でタイムアウト
-
+      updateBanner('Firestore 同期を確立しています...', 'ok');
       try {
         const app = initializeApp(firebaseConfig);
         auth = getAuth(app);
         
-        db = initializeFirestore(app, {
-          experimentalForceLongPolling: true,
-          useFetchStreams: false
+        // ネットワーク制限回避のための設定
+        db = initializeFirestore(app, { 
+          experimentalForceLongPolling: true, 
+          useFetchStreams: false 
         });
+        
+        await enableNetwork(db).catch(() => {});
 
+        // 匿名認証を完了するまで待つ（重要）
+        let user = null;
         try {
-          await enableNetwork(db);
-          await signInAnonymously(auth);
-        } catch(e) { console.warn("認証/NW警告:", e.message); }
+          const authResult = await signInAnonymously(auth);
+          user = authResult.user;
+          console.log("Auth Success:", user.uid);
+        } catch (e) {
+          console.error("Auth Error:", e.code);
+          if (e.code === 'auth/unauthorized-domain') {
+            updateBanner('⚠ ドメイン拒否。FirebaseコンソールのAuthentication > 設定 > 承認済みドメインを確認してください。', 'warn');
+            return;
+          }
+        }
         
         eventId = qs('event') || uid();
-        setQueryEvent(eventId);
+        try { const url = new URL(location.href); url.searchParams.set('event', eventId); history.replaceState({}, '', url.toString()); } catch(e) {}
         
-        const idChip = document.getElementById('eventIdChip');
-        if (idChip) idChip.textContent = `event: ${eventId}`;
-        updateShareUrl();
-
         const ref = doc(db, 'events', eventId);
         
-        // 疎通確認のための getDoc
-        const snap = await getDoc(ref);
-        isFirestoreReady = true;
-        clearTimeout(timeout);
+        // 接続安定化のための僅かな待機
+        await new Promise(r => setTimeout(r, 1000));
 
-        if(snap.exists()){
-          applyState(snap.data());
-          updateBanner('Firestore 同期を開始しました。', 'ok');
-        } else {
-          ensureResponses();
-          await setDoc(ref, serializeState());
-          updateBanner('新規イベントを作成し、同期を開始しました。', 'ok');
-          render();
-        }
-
-        unsubscribe = onSnapshot(ref, (docSnap) => {
-          if(!docSnap.exists() || isApplyingRemote) return;
-          applyState(docSnap.data());
-          const statSync = document.getElementById('statSync');
-          if (statSync) statSync.textContent = '同期中';
+        // getDocの代わりにonSnapshotを使って最初の読み込みを行う。
+        // これにより「client is offline」エラーを回避し、接続が確立されるのを待つ。
+        let initialLoadDone = false;
+        onSnapshot(ref, (docSnap) => {
+          if (!initialLoadDone) {
+            initialLoadDone = true;
+            isFirestoreReady = true;
+            if(docSnap.exists()){
+              state = { ...state, ...docSnap.data() };
+              updateBanner('クラウド同期中', 'ok');
+            } else {
+              // 初回保存
+              ensureResponses();
+              setDoc(ref, state).then(() => {
+                updateBanner('クラウドに新規保存しました', 'ok');
+              }).catch(e => console.error("Initial Save Error:", e));
+            }
+            render();
+          } else {
+            // 定常的な同期
+            if(!docSnap.exists() || isApplyingRemote) return;
+            isApplyingRemote = true;
+            state = { ...state, ...docSnap.data() };
+            render();
+            isApplyingRemote = false;
+            document.getElementById('statSync').textContent = '同期中';
+          }
         }, (err) => {
-          console.warn("同期セッション切断:", err.message);
+          console.error("Firestore Sync Error:", err.code, err.message);
           if (err.code === 'permission-denied') {
-            updateBanner('同期失敗: 権限がありません。匿名認証を有効にするか、ルールを見直してください。', 'warn');
+            updateBanner('⚠ 権限拒否。Firestoreのルール設定と公開ボタンを確認してください。', 'warn');
+          } else if (err.code === 'unavailable') {
+            updateBanner('⚠ 通信エラー。数秒後に自動再試行されます。', 'warn');
           }
         });
 
       } catch (err) {
-        clearTimeout(timeout);
-        console.error("システム初期化失敗:", err);
-        updateBanner(`接続エラー: ${err.message}`, 'warn');
-        isFirestoreReady = false;
+        console.error("Fatal System Error:", err);
+        updateBanner('接続に失敗しました。ローカルモードで動作中。', 'warn');
         render();
       }
     }
 
-    function updateShareUrl(){
-      const baseUrl = location.href.split('?')[0];
-      const share = `${baseUrl}?event=${eventId}`;
-      const shareInput = document.getElementById('shareUrl');
-      if (shareInput) shareInput.value = share;
+    async function save(){
+      if(!isFirestoreReady || !eventId || isApplyingRemote) return;
+      try {
+        await setDoc(doc(db, 'events', eventId), { ...state, updatedAt: serverTimestamp() }, { merge: true });
+        document.getElementById('statSync').textContent = '保存済';
+      } catch (e) { console.error("Save Error:", e); }
+    }
+
+    function scheduleSave(){
+      if(!isFirestoreReady) return;
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(save, 800);
+      document.getElementById('statSync').textContent = '待機中';
+    }
+
+    function ensureResponses(){
+      state.participants.forEach((p)=>{
+        if(!state.responses[p.id]) state.responses[p.id] = {};
+        state.candidates.forEach((c)=>{ if(!state.responses[p.id][c.id]) state.responses[p.id][c.id]='ok'; });
+      });
     }
 
     function render(){
-      document.getElementById('eventTitle').value = state.eventTitle;
-      document.getElementById('eventDescription').value = state.eventDescription;
+      document.getElementById('eventTitle').value = state.eventTitle || '';
+      document.getElementById('eventDescription').value = state.eventDescription || '';
       document.getElementById('modeSelect').value = state.mode;
       document.getElementById('importantWeight').value = String(state.importantWeight);
-      renderCandidates();
-      renderParticipants();
-      renderResponsesTable();
-      renderRanking();
-      renderStats();
-      updateShareUrl();
-    }
-
-    function renderCandidates(){
-      const list=document.getElementById('candidateList'); 
-      if(!list) return;
-      list.innerHTML='';
-      state.candidates.forEach((c,i)=>{
-        const div=document.createElement('div'); div.className='candidate-card';
-        div.innerHTML=`<div><strong>候補${i+1}: ${fmt(c)}</strong><small>${wd(c.date)}</small></div><button class="btn btn-danger" data-del="${c.id}">削除</button>`;
-        list.appendChild(div);
-      });
-      const formArea = document.getElementById('candidateFormArea');
-      if(formArea) {
-        formArea.innerHTML=`<div class="candidate-row"><div class="field"><label>日付</label><input type="date" id="newD"></div><div class="field"><label>時間</label><input type="time" id="newT" value="18:00"></div><button class="btn btn-primary" id="addC">追加</button></div>`;
-        document.getElementById('addC').onclick=()=>{
-          const d=document.getElementById('newD').value; const t=document.getElementById('newT').value || '18:00';
-          if(!d) return;
-          state.candidates.push({id:uid(),date:d,time:t}); render(); scheduleSave();
-        };
-      }
-      document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
-        if(state.candidates.length<=1) return;
-        state.candidates=state.candidates.filter(x=>x.id!==b.dataset.del); render(); scheduleSave();
-      });
-    }
-
-    function renderParticipants(){
-      const list=document.getElementById('participantList'); 
-      if(!list) return;
-      list.innerHTML='';
-      state.participants.forEach(p=>{
-        const row=document.createElement('div'); row.className='participant-row';
-        row.innerHTML=`<input value="${esc(p.name)}" data-name="${p.id}" placeholder="名前"><input value="${esc(p.role)}" data-role="${p.id}" placeholder="役割"><label><input type="checkbox" data-imp="${p.id}" ${p.important?'checked':''}> ⭐重要</label><button class="btn btn-danger" data-pdel="${p.id}">削除</button>`;
-        list.appendChild(row);
-      });
-      document.querySelectorAll('[data-name]').forEach(el=>el.oninput=()=>{ const t=state.participants.find(p=>p.id===el.dataset.name); if(t) t.name=el.value; scheduleSave(); });
-      document.querySelectorAll('[data-role]').forEach(el=>el.oninput=()=>{ const t=state.participants.find(p=>p.id===el.dataset.role); if(t) t.role=el.value; scheduleSave(); });
-      document.querySelectorAll('[data-imp]').forEach(el=>el.onchange=()=>{ const t=state.participants.find(p=>p.id===el.dataset.imp); if(t) t.important=el.checked; renderRanking(); scheduleSave(); });
-      document.querySelectorAll('[data-pdel]').forEach(b=>b.onclick=()=>{ if(state.participants.length<=1) return; state.participants=state.participants.filter(x=>x.id!==b.dataset.pdel); render(); scheduleSave(); });
-    }
-
-    function renderResponsesTable(){
-      const w=document.getElementById('responseTableWrap');
-      if(!w || !state.participants.length||!state.candidates.length) return;
-      let html='<table class="responses-table"><thead><tr><th>参列者</th>';
-      state.candidates.forEach((c,i)=> html+=`<th>候補${i+1}<br><span class="small">${fmt(c)}</span></th>`);
-      html+='</tr></thead><tbody>';
-      state.participants.forEach(p=>{
-        html+=`<tr><td><strong>${esc(p.name)}</strong>${p.important?' ⭐':''}</td>`;
-        state.candidates.forEach(c=>{
-          const v=state.responses[p.id]?.[c.id]||'ok';
-          html+=`<td><select class="status-select" data-r="${p.id}|${c.id}"><option value="ok" ${v==='ok'?'selected':''}>○ 参加</option><option value="maybe" ${v==='maybe'?'selected':''}>△ 調整</option><option value="ng" ${v==='ng'?'selected':''}>× 不可</option></select></td>`;
-        });
-        html+='</tr>';
-      });
-      html+='</tbody></table>'; w.innerHTML=html;
-      document.querySelectorAll('[data-r]').forEach(s=>s.onchange=()=>{ 
-        const [pid,cid]=s.dataset.r.split('|'); 
-        if(!state.responses[pid]) state.responses[pid]={};
-        state.responses[pid][cid]=s.value; 
-        renderRanking(); 
-        scheduleSave(); 
-      });
-    }
-
-    function calc(){
-      const W = Number(state.importantWeight) || 3;
-      return state.candidates.map(c => {
-        let score = 0, ok = 0, mb = 0, ng = 0, iok = 0, ing = 0, un = [];
-        state.participants.forEach(p => {
-          const st = state.responses[p.id]?.[c.id] || 'ok';
-          const weight = p.important ? W : 1;
-          if (st === 'ok') { ok++; if(p.important) iok++; score += 3 * weight; }
-          else if (st === 'maybe') { mb++; score += 1 * weight; un.push(p.name); }
-          else { ng++; if(p.important) ing++; score -= 2 * weight; un.push(p.name); }
-        });
-        
-        if (state.mode === 'important') score += (iok * 5) - (ing * 10);
-        if (state.mode === 'organizer') score -= (mb * 2);
-
-        return { c, score, ok, mb, ng, iok, ing, un };
-      }).sort((a, b) => b.score - a.score);
-    }
-
-    function renderRanking(){
-      const res=calc(); const area=document.getElementById('rankingArea'); 
-      if(!area) return;
-      area.innerHTML='';
-      res.forEach((it,i)=>{
-        const d=document.createElement('div'); d.className=`rank-card ${i===0?'rank-top':''}`;
-        d.innerHTML=`<div class="topline"><div><h3>${i===0?'👑 最有力':`候補 ${i+1}`}</h3><div class="small">${fmt(it.c)}</div></div><div class="score">点数: ${it.score}</div></div><div class="meta"><span class="status-pill ok">○ ${it.ok}</span><span class="status-pill maybe">△ ${it.mb}</span><span class="status-pill ng">× ${it.ng}</span></div>`;
-        area.appendChild(d);
-      });
-      const box=document.getElementById('summaryBox');
-      if(box && res[0]) box.innerHTML=`<strong>${fmt(res[0].c)} が最も穏当です</strong><p>重要人物の欠席もなく、全体の合意が得やすい候補です。</p>`;
-    }
-
-    function renderStats(){
-      const sp = document.getElementById('statParticipants');
-      const sc = document.getElementById('statCandidates');
-      const sm = document.getElementById('statMode');
-      const ss = document.getElementById('statSync');
       
-      if(sp) sp.textContent=`${state.participants.length}人`;
-      if(sc) sc.textContent=`${state.candidates.length}件`;
-      if(sm) sm.textContent={important:'偉い人優先',flat:'フラット',organizer:'幹事最適'}[state.mode];
+      const list = document.getElementById('candidateList');
+      list.innerHTML = state.candidates.map(c => `<div class="candidate-card"><div><strong>${fmt(c)}</strong> <small>${wd(c.date)}</small></div><button class="btn btn-danger" onclick="window.delC('${c.id}')">削除</button></div>`).join('');
       
-      if(ss) {
-        if (isFirestoreReady) ss.textContent = '同期中';
-        else if (db === null) ss.textContent = '接続試行中';
-        else ss.textContent = 'ローカル';
-      }
+      const pList = document.getElementById('participantList');
+      pList.innerHTML = state.participants.map(p => `<div class="participant-row"><input value="${esc(p.name)}" oninput="window.upP('${p.id}','name',this.value)"><input value="${esc(p.role)}" oninput="window.upP('${p.id}','role',this.value)"><label><input type="checkbox" ${p.important?'checked':''} onchange="window.upP('${p.id}','important',this.checked)">⭐</label><button class="btn btn-danger" onclick="window.delP('${p.id}')">削除</button></div>`).join('');
+
+      const w = document.getElementById('responseTableWrap');
+      let html = '<table class="responses-table"><thead><tr><th>参列者</th>' + state.candidates.map((c,i)=>`<th>候補${i+1}</th>`).join('') + '</tr></thead><tbody>';
+      html += state.participants.map(p => `<tr><td><strong>${esc(p.name)}</strong></td>` + state.candidates.map(c => `<td><select onchange="window.upR('${p.id}','${c.id}',this.value)"><option value="ok" ${state.responses[p.id]?.[c.id]==='ok'?'selected':''}>○</option><option value="maybe" ${state.responses[p.id]?.[c.id]==='maybe'?'selected':''}>△</option><option value="ng" ${state.responses[p.id]?.[c.id]==='ng'?'selected':''}>×</option></select></td>`).join('') + '</tr>').join('');
+      w.innerHTML = html + '</tbody></table>';
+
+      const res = state.candidates.map(c => {
+        let ok=0, mb=0, ng=0;
+        state.participants.forEach(p => { const r = state.responses[p.id]?.[c.id]||'ok'; if(r==='ok') ok++; else if(r==='maybe') mb++; else ng++; });
+        return { c, ok, mb, ng, score: ok*3+mb-ng*2 };
+      }).sort((a,b)=>b.score-a.score);
+      
+      document.getElementById('rankingArea').innerHTML = res.map((it,i)=>`<div class="rank-card ${i===0?'rank-top':''}"><h3>${i===0?'👑':''} ${fmt(it.c)}</h3><div class="meta">○${it.ok} △${it.mb} ×${it.ng}</div></div>`).join('');
+      if(res[0]) document.getElementById('summaryBox').innerHTML = `<strong>${fmt(res[0].c)} が最も穏当です。</strong>`;
+      
+      document.getElementById('statParticipants').textContent = state.participants.length + '人';
+      document.getElementById('statCandidates').textContent = state.candidates.length + '件';
+      document.getElementById('statSync').textContent = isFirestoreReady ? '同期中' : 'ローカル';
+      document.getElementById('eventIdChip').textContent = 'event: ' + (eventId || 'local');
+      document.getElementById('shareUrl').value = location.origin + location.pathname + '?event=' + (eventId || '');
     }
 
+    window.delC = id => { state.candidates = state.candidates.filter(c=>c.id!==id); render(); scheduleSave(); };
+    window.delP = id => { state.participants = state.participants.filter(p=>p.id!==id); render(); scheduleSave(); };
+    window.upP = (id,k,v) => { const p=state.participants.find(x=>x.id===id); if(p){ p[k]=v; scheduleSave(); }};
+    window.upR = (pid,cid,v) => { if(!state.responses[pid]) state.responses[pid]={}; state.responses[pid][cid]=v; render(); scheduleSave(); };
+
+    document.getElementById('addCandidateBtn').onclick=()=>{ state.candidates.push({id:uid(),date:new Date().toISOString().split('T')[0],time:'18:00'}); render(); scheduleSave(); };
+    document.getElementById('addParticipantBtn').onclick=()=>{ state.participants.push({id:uid(),name:'参加者',role:'',important:false}); render(); scheduleSave(); };
     document.getElementById('eventTitle').oninput=e=>{ state.eventTitle=e.target.value; scheduleSave(); };
-    document.getElementById('eventDescription').oninput=e=>{ state.eventDescription=e.target.value; scheduleSave(); };
-    document.getElementById('modeSelect').onchange=e=>{ state.mode=e.target.value; render(); scheduleSave(); };
-    document.getElementById('importantWeight').onchange=e=>{ state.importantWeight=Number(e.target.value); render(); scheduleSave(); };
-    document.getElementById('addCandidateBtn').onclick=()=>document.getElementById('newD')?.focus();
-    document.getElementById('addParticipantBtn').onclick=()=>{ state.participants.push({id:uid(),name:`参加者${state.participants.length+1}`,role:'',important:false}); render(); scheduleSave(); };
-    
-    document.getElementById('runAiBtn').onclick=()=>{ render(); scheduleSave(); };
-    document.getElementById('sampleDataBtn').onclick=()=>{ state.responses={}; ensureResponses(); render(); scheduleSave(); };
+    document.getElementById('copyLinkBtn').onclick=()=> { navigator.clipboard.writeText(document.getElementById('shareUrl').value); updateBanner('コピーしました', 'ok'); };
+    document.getElementById('newEventBtn').onclick=()=> { location.href = location.origin + location.pathname; };
 
-    document.getElementById('copyLinkBtn').onclick=async()=>{
-      try {
-        await navigator.clipboard.writeText(document.getElementById('shareUrl').value);
-        updateBanner('URLをコピーしました', 'ok');
-      } catch (err) {
-        updateBanner('URLコピーに失敗しました', 'warn');
-      }
-    };
-    
-    document.getElementById('newEventBtn').onclick=()=>{
-      const baseUrl = window.location.origin + window.location.pathname;
-      location.href = baseUrl;
-    };
-
-    render();
     initFirestore();
   </script>
 </body>
