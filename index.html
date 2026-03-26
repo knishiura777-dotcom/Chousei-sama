@@ -94,7 +94,7 @@
           <div class="field">
             <label for="shareUrl">共有URL</label>
             <div class="linkbox">
-              <input id="shareUrl" readonly value="URL取得中..." />
+              <input id="shareUrl" readonly value="URLを取得中..." />
               <button class="btn btn-ghost" id="copyLinkBtn">URLコピー</button>
               <button class="btn btn-warning" id="newEventBtn">新しいイベント</button>
             </div>
@@ -178,16 +178,19 @@
 
     function updateBanner(text, kind=''){
       const el = document.getElementById('statusBanner');
-      if (el) { el.className = `banner ${kind}`.trim(); el.textContent = text; }
+      if (el) { 
+        el.className = `banner ${kind}`.trim(); 
+        el.textContent = text; 
+      }
     }
 
     async function initFirestore(){
-      updateBanner('Firebase 初期化中...', 'ok');
+      updateBanner('Firebase 接続準備中...', 'ok');
       
-      // 30秒のタイムアウト設定
+      // 接続タイムアウト判定（30秒）
       connectionTimer = setTimeout(() => {
         if (!isFirestoreReady) {
-          updateBanner('接続に時間がかかっています。ネットワーク制限がないか確認してください。', 'warn');
+          updateBanner('接続に時間がかかっています。ローカルモードで動作しますが、同期が確立され次第切り替わります。', 'warn');
           render();
         }
       }, 30000);
@@ -203,10 +206,10 @@
         try {
           const authResult = await signInAnonymously(auth);
           user = authResult.user;
-          console.log("Authenticated as:", user.uid);
+          console.log("Authenticated:", user.uid);
         } catch (e) {
           if (e.code === 'auth/unauthorized-domain') {
-            updateBanner('⚠ ドメイン拒否。Firebaseの設定を確認してください。', 'warn');
+            updateBanner('⚠ ドメイン未許可。Firebase ConsoleのAuthentication設定を確認してください。', 'warn');
             return;
           }
         }
@@ -218,25 +221,29 @@
           history.replaceState({}, '', url.toString()); 
         } catch(e) {}
         
+        const idChip = document.getElementById('eventIdChip');
+        if (idChip) idChip.textContent = `event: ${eventId}`;
+
         const ref = doc(db, 'events', eventId);
         
         let initialLoadDone = false;
+        // リアルタイムリスナーを開始。最初のデータが来た時点で isFirestoreReady を真にする。
         onSnapshot(ref, (docSnap) => {
-          // 接続成功した瞬間にタイマーをクリア
+          // 接続成功をマーク
           if (!isFirestoreReady) {
             isFirestoreReady = true;
-            clearTimeout(connectionTimer);
+            clearTimeout(connectionTimer); // タイムアウト警告をキャンセル
           }
 
           if (!initialLoadDone) {
             initialLoadDone = true;
             if(docSnap.exists()){
               state = { ...state, ...docSnap.data() };
-              updateBanner(`クラウド同期中 (User: ${user?.uid?.slice(0,6) || 'anon'})`, 'ok');
+              updateBanner('クラウド同期が完了しました', 'ok');
             } else {
               ensureResponses();
               setDoc(ref, state).then(() => {
-                updateBanner('同期中（新規イベント保存完了）', 'ok');
+                updateBanner('新規イベントをクラウドに保存しました', 'ok');
               });
             }
             render();
@@ -250,14 +257,14 @@
           }
         }, (err) => {
           console.error("Firestore Error:", err.code);
-          if (err.code === 'permission-denied') {
-            updateBanner('⚠ 権限拒否。Firestoreのルール設定を確認してください。', 'warn');
+          if (!initialLoadDone) {
+            updateBanner(`接続エラー (${err.code})。設定を確認してください。`, 'warn');
           }
         });
 
       } catch (err) {
         clearTimeout(connectionTimer);
-        updateBanner('致命的なエラーによりローカルモードで動作します。', 'warn');
+        updateBanner('致命的なエラーが発生しました。', 'warn');
         render();
       }
     }
@@ -316,7 +323,6 @@
       document.getElementById('statCandidates').textContent = state.candidates.length + '件';
       document.getElementById('statMode').textContent = {important:'偉い人優先',flat:'フラット',organizer:'幹事最適'}[state.mode];
       document.getElementById('statSync').textContent = isFirestoreReady ? '同期中' : 'ローカル';
-      document.getElementById('eventIdChip').textContent = 'event: ' + (eventId || 'local');
       
       const baseUrl = location.href.split('?')[0];
       document.getElementById('shareUrl').value = baseUrl + '?event=' + (eventId || '');
