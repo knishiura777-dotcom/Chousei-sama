@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>調整様（リアルタイム版）</title>
+<title>調整様（完全版）</title>
 <style>
 body{font-family:sans-serif;background:#f5f7fb;padding:20px}
 .panel{background:#fff;padding:16px;margin-bottom:16px;border-radius:10px}
@@ -14,10 +14,10 @@ button{padding:8px 12px;background:#2563eb;color:#fff;border:none;border-radius:
 
 <div class="panel">
 <h2>予定情報</h2>
-<input id="title" placeholder="予定名">
-<input id="location" placeholder="場所">
+<input id="title" placeholder="予定名（例：研究打ち合わせ）">
+<input id="location" placeholder="場所 / URL">
 <input id="deadline" type="datetime-local">
-<input id="organizer" placeholder="幹事">
+<input id="organizer" placeholder="幹事名">
 <textarea id="desc" placeholder="説明"></textarea>
 </div>
 
@@ -47,9 +47,8 @@ button{padding:8px 12px;background:#2563eb;color:#fff;border:none;border-radius:
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-/* ===== Firebase設定（あなたの値） ===== */
 const firebaseConfig = {
   apiKey: "AIzaSyBTXGKYfhPoPqOwgwzoC78N1R7f0He67j0",
   authDomain: "chousei-sama-85eed.firebaseapp.com",
@@ -62,7 +61,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* ===== ID ===== */
 function uid(){return Math.random().toString(36).slice(2,9)}
 
 function getEventId(){
@@ -77,7 +75,6 @@ function getEventId(){
 }
 const eventId=getEventId();
 
-/* ===== state ===== */
 const state={
   title:"",
   location:"",
@@ -89,21 +86,16 @@ const state={
   responses:{}
 };
 
-/* ===== Firestore ===== */
 async function save(){
   await setDoc(doc(db,"events",eventId),state);
 }
 
-function subscribe(){
-  onSnapshot(doc(db,"events",eventId),(snap)=>{
-    if(snap.exists()){
-      Object.assign(state,snap.data());
-      render();
-    }
-  });
+async function load(){
+  const snap=await getDoc(doc(db,"events",eventId));
+  if(snap.exists()) Object.assign(state,snap.data());
+  render();
 }
 
-/* ===== 補完 ===== */
 function ensure(){
   state.participants.forEach(p=>{
     if(!state.responses[p.id]) state.responses[p.id]={};
@@ -113,7 +105,6 @@ function ensure(){
   });
 }
 
-/* ===== render ===== */
 function render(){
   ensure();
 
@@ -132,15 +123,13 @@ function render(){
   document.querySelectorAll('#pList input').forEach(i=>{
     i.oninput=()=>{
       state.participants.find(p=>p.id===i.dataset.id).name=i.value;
-      renderTable();
-      save();
+      renderTable(); save();
     }
   });
 
   renderTable();
 }
 
-/* ===== table ===== */
 function renderTable(){
   let html='<table border="1"><tr><th></th>';
   state.candidates.forEach(c=>html+=`<th>${c.date}<br>${c.time}</th>`);
@@ -166,15 +155,13 @@ function renderTable(){
     s.onchange=()=>{
       const [p,c]=s.dataset.split('|');
       state.responses[p][c]=s.value;
-      calc();
-      save();
+      calc(); save();
     }
   });
 
   calc();
 }
 
-/* ===== 計算 ===== */
 function calc(){
   const res=state.candidates.map(c=>{
     let score=0;
@@ -198,18 +185,15 @@ function calc(){
   }
 }
 
-/* ===== イベント ===== */
 addC.onclick=()=>{
   if(!d.value) return;
   state.candidates.push({id:uid(),date:d.value,time:t.value});
-  render();
-  save();
+  render(); save();
 };
 
 addP.onclick=()=>{
   state.participants.push({id:uid(),name:"参加者"});
-  render();
-  save();
+  render(); save();
 };
 
 title.oninput=e=>{state.title=e.target.value; save();}
@@ -218,10 +202,7 @@ deadline.oninput=e=>{state.deadline=e.target.value; save();}
 organizer.oninput=e=>{state.organizer=e.target.value; save();}
 desc.oninput=e=>{state.desc=e.target.value; save();}
 
-/* ===== 起動 ===== */
-subscribe();
-render();
-
+load();
 </script>
 </body>
 </html>
