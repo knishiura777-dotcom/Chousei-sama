@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>調整様 v0.4.0</title>
+<title>調整様 v0.5.0</title>
 <style>
   :root{
     --bg:#f3f6fb;--panel:rgba(255,255,255,.84);--line:rgba(148,163,184,.22);--line-strong:rgba(148,163,184,.34);
@@ -49,14 +49,13 @@
   .toggle-chip,.meta-chip{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:999px;border:1px solid var(--line);background:#f8fafc;font-size:12px;font-weight:800;color:#334155;white-space:nowrap}.toggle-chip input{width:auto;margin:0}
   .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:20px;background:rgba(255,255,255,.86)}
   table{width:100%;border-collapse:collapse;min-width:720px}th,td{padding:12px;border-bottom:1px solid #edf2f7;text-align:left;vertical-align:middle}th{background:rgba(248,250,252,.95);font-size:12px;font-weight:800;color:#334155;position:sticky;top:0;z-index:1}tr:last-child td{border-bottom:none}
-  .result-box strong,.viewer-hero strong{display:block;font-size:22px;letter-spacing:-.03em}.result-meta,.viewer-meta{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 14px}
+  .result-box,.viewer-hero{padding:18px;border-radius:22px;background:linear-gradient(180deg,#eff6ff 0%, #ffffff 100%);border:1px solid #bfdbfe;line-height:1.75}.result-box strong,.viewer-hero strong{display:block;font-size:22px;letter-spacing:-.03em}.result-meta,.viewer-meta{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 14px}
   .rank-card,.viewer-candidate,.viewer-response-card{padding:16px;border-radius:20px;border:1px solid var(--line);background:rgba(255,255,255,.78)}
   .rank-card.top,.viewer-candidate.top{border:2px solid rgba(37,99,235,.22);background:linear-gradient(180deg,rgba(239,246,255,.92) 0%, rgba(255,255,255,.94) 100%)}
   .rank-head,.viewer-candidate-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px}
   .score{display:inline-flex;padding:8px 10px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:800}
   .pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border-radius:999px;font-size:12px;font-weight:800}.pill.ok{background:#dcfce7;color:#166534}.pill.maybe{background:#ffedd5;color:#9a3412}.pill.ng{background:#fee2e2;color:#991b1b}
   .rank-reason,.viewer-reason{margin-top:10px;color:var(--sub);font-size:13px;line-height:1.7}.viewer-card h3,.viewer-response-card h3{margin:0 0 10px;font-size:18px}.viewer-response-row{display:grid;grid-template-columns:1fr 170px;gap:10px;align-items:center;margin-bottom:10px}
-  .access-note{margin-top:10px;padding:12px 14px;border-radius:16px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-size:13px;line-height:1.7}
   .hidden{display:none !important}
   @media (max-width:1100px){.layout{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
   @media (max-width:760px){body{padding:14px}.topbar,.grid-2,.candidate-add,.participant-row,.viewer-response-row{display:grid;grid-template-columns:1fr}.meta-strip,.actions{justify-content:flex-start}.stats{grid-template-columns:1fr}table{min-width:640px}}
@@ -68,10 +67,10 @@
     <div class="brand">
       <div class="eyebrow">AI Scheduling Ritual</div>
       <h1>調整様</h1>
-      <div class="lede">編集画面は管理者だけが使い、会議参加者にはシンプルな閲覧兼回答画面だけを共有できるようにしています。</div>
+      <div class="lede">編集用と閲覧用をシンプルに切り替えます。閲覧画面では参加者が自分の参加可否だけを更新できます。</div>
     </div>
     <div class="meta-strip">
-      <div class="meta-pill">version <span id="versionLabel">0.4.0</span></div>
+      <div class="meta-pill">version <span id="versionLabel">0.5.0</span></div>
       <div id="statusPill" class="status-pill"><span class="status-dot"></span><span id="statusText">未接続</span></div>
       <div class="meta-pill">event <span id="eventLabel">-</span></div>
     </div>
@@ -79,12 +78,12 @@
 
   <div class="toolbar">
     <div class="mode-switch" role="tablist" aria-label="screen mode">
-      <button id="editModeBtn" class="mode-btn active" type="button">編集画面</button>
-      <button id="viewerModeBtn" class="mode-btn" type="button">閲覧画面</button>
+      <button id="editModeBtn" class="mode-btn active" type="button">編集用</button>
+      <button id="viewerModeBtn" class="mode-btn" type="button">閲覧用</button>
     </div>
     <div class="actions">
-      <button id="copyEditUrlBtn" class="btn-ghost" type="button">編集URLをコピー</button>
-      <button id="copyViewerUrlBtn" class="btn-primary" type="button">閲覧URLをコピー</button>
+      <button id="copyEditUrlBtn" class="btn-ghost" type="button">編集用URLをコピー</button>
+      <button id="copyViewerUrlBtn" class="btn-primary" type="button">閲覧用URLをコピー</button>
     </div>
   </div>
 
@@ -92,46 +91,20 @@
     <div class="layout">
       <main>
         <section class="panel">
-          <div class="section-head">
-            <div>
-              <h2>予定情報</h2>
-              <p>管理者が予定の骨格と回答締切日時を設定します。</p>
-            </div>
+          <div class="section-head"><div><h2>予定情報</h2><p>イベント内容と回答締切日時を編集します。</p></div></div>
+          <div class="grid-2">
+            <div class="field"><div class="label-row"><label for="title">予定名</label><span class="hint">例：研究打ち合わせ</span></div><input id="title" placeholder="例：研究打ち合わせ / 定例会議 / 歓迎会" /></div>
+            <div class="field"><div class="label-row"><label for="location">場所 / URL</label><span class="hint">会議室や Zoom URL</span></div><input id="location" placeholder="例：会議室A / Zoom / 仙台駅前" /></div>
           </div>
           <div class="grid-2">
-            <div class="field">
-              <div class="label-row"><label for="title">予定名</label><span class="hint">例：研究打ち合わせ</span></div>
-              <input id="title" placeholder="例：研究打ち合わせ / 定例会議 / 歓迎会" />
-            </div>
-            <div class="field">
-              <div class="label-row"><label for="location">場所 / URL</label><span class="hint">会議室や Zoom URL</span></div>
-              <input id="location" placeholder="例：会議室A / Zoom / 仙台駅前" />
-            </div>
+            <div class="field"><div class="label-row"><label for="deadline">回答締切日時</label><span class="hint">この日時までに参加可否を入力</span></div><input id="deadline" type="datetime-local" /></div>
+            <div class="field"><div class="label-row"><label for="organizer">幹事名</label><span class="hint">主催者 / 連絡窓口</span></div><input id="organizer" placeholder="例：西浦" /></div>
           </div>
-          <div class="grid-2">
-            <div class="field">
-              <div class="label-row"><label for="deadline">回答締切日時</label><span class="hint">この日時までに参加可否を入力</span></div>
-              <input id="deadline" type="datetime-local" />
-            </div>
-            <div class="field">
-              <div class="label-row"><label for="organizer">幹事名</label><span class="hint">主催者 / 連絡窓口</span></div>
-              <input id="organizer" placeholder="例：西浦" />
-            </div>
-          </div>
-          <div class="field">
-            <div class="label-row"><label for="desc">説明</label><span class="hint">目的・持ち物・補足事項</span></div>
-            <textarea id="desc" placeholder="説明"></textarea>
-          </div>
+          <div class="field"><div class="label-row"><label for="desc">説明</label><span class="hint">目的・持ち物・補足事項</span></div><textarea id="desc" placeholder="説明"></textarea></div>
         </section>
 
         <section class="panel">
-          <div class="section-head">
-            <div>
-              <h2>候補日</h2>
-              <p>候補日は管理者が追加・削除します。</p>
-            </div>
-            <div class="actions"><button id="focusCandidateBtn" class="btn-ghost" type="button">入力欄へ移動</button></div>
-          </div>
+          <div class="section-head"><div><h2>候補日</h2><p>候補日はここで追加・削除します。</p></div><div class="actions"><button id="focusCandidateBtn" class="btn-ghost" type="button">入力欄へ移動</button></div></div>
           <div class="candidate-add">
             <div class="field"><label for="d">日付</label><input type="date" id="d"></div>
             <div class="field"><label for="t">時間</label><input type="time" id="t" value="18:00"></div>
@@ -141,37 +114,19 @@
         </section>
 
         <section class="panel">
-          <div class="section-head">
-            <div>
-              <h2>参加者</h2>
-              <p>参加者一覧は管理者が整えます。参加者は閲覧画面から自分の回答を更新できます。</p>
-            </div>
-            <button id="addP" class="btn-primary" type="button">＋ 参加者を追加</button>
-          </div>
+          <div class="section-head"><div><h2>参加者</h2><p>参加者一覧を編集します。</p></div><button id="addP" class="btn-primary" type="button">＋ 参加者を追加</button></div>
           <div id="pList" class="stack"></div>
         </section>
 
         <section class="panel">
-          <div class="section-head">
-            <div>
-              <h2>回答一覧</h2>
-              <p>管理者は全員の状況を一覧で確認できます。</p>
-            </div>
-            <div class="actions"><button id="resetResponsesBtn" class="btn-ghost" type="button">見本に戻す</button></div>
-          </div>
+          <div class="section-head"><div><h2>回答一覧</h2><p>全員の状況を一覧で確認します。</p></div><div class="actions"><button id="resetResponsesBtn" class="btn-ghost" type="button">見本に戻す</button></div></div>
           <div class="table-wrap"><div id="table"></div></div>
         </section>
       </main>
 
       <aside>
-        <section class="panel">
-          <div class="section-head"><div><h2>結果</h2><p>最も揉めにくい候補を表示します。</p></div></div>
-          <div id="result" class="result-box">候補日を入力してください。</div>
-        </section>
-        <section class="panel">
-          <div class="section-head"><div><h2>ランキング</h2><p>各候補のスコアと理由です。</p></div></div>
-          <div id="ranking" class="ranking"></div>
-        </section>
+        <section class="panel"><div class="section-head"><div><h2>結果</h2><p>最も揉めにくい候補を表示します。</p></div></div><div id="result" class="result-box">候補日を入力してください。</div></section>
+        <section class="panel"><div class="section-head"><div><h2>ランキング</h2><p>各候補のスコアと理由です。</p></div></div><div id="ranking" class="ranking"></div></section>
       </aside>
     </div>
   </div>
@@ -179,23 +134,14 @@
   <div id="viewerScreen" class="hidden">
     <div class="viewer-layout">
       <section class="panel"><div id="viewerHero" class="viewer-hero"></div></section>
-
       <section class="panel">
-        <div class="section-head"><div><h2>参加可否を更新</h2><p>自分の名前を選び、候補ごとの参加状況だけをシンプルに更新します。</p></div></div>
+        <div class="section-head"><div><h2>参加可否を更新</h2><p>自分の名前を選び、参加可否だけを更新します。</p></div></div>
         <div class="viewer-card">
-          <div class="field">
-            <div class="label-row"><label for="viewerParticipantSelect">参加者名</label><span class="hint">自分の名前を選択</span></div>
-            <select id="viewerParticipantSelect"></select>
-          </div>
+          <div class="field"><div class="label-row"><label for="viewerParticipantSelect">参加者名</label><span class="hint">自分の名前を選択</span></div><select id="viewerParticipantSelect"></select></div>
           <div id="viewerResponseEditor" class="viewer-response-list"></div>
         </div>
-        <div id="viewerAccessNote" class="access-note hidden">この画面では予定内容の編集はできません。参加状況の更新のみ可能です。</div>
       </section>
-
-      <section class="panel">
-        <div class="section-head"><div><h2>候補一覧</h2><p>参加者向けに、候補と現在の傾向だけを簡潔に表示します。</p></div></div>
-        <div id="viewerCandidates" class="viewer-candidate-list"></div>
-      </section>
+      <section class="panel"><div class="section-head"><div><h2>候補一覧</h2><p>候補と現在の傾向だけを簡潔に表示します。</p></div></div><div id="viewerCandidates" class="viewer-candidate-list"></div></section>
     </div>
   </div>
 </div>
@@ -204,7 +150,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
 import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-const APP_VERSION = "0.4.0";
+const APP_VERSION = "0.5.0";
 const firebaseConfig = {
   apiKey: "AIzaSyBTXGKYfhPoPqOwgwzoC78N1R7f0He67j0",
   authDomain: "chousei-sama-85eed.firebaseapp.com",
@@ -225,70 +171,21 @@ let viewerSelectedParticipantId = "";
 function uid(){ return Math.random().toString(36).slice(2,9); }
 function esc(s){ return String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;"); }
 function availabilityLabel(v){ return v === 'ok' ? '○ 参加可' : v === 'maybe' ? '△ 調整可' : '× 不可'; }
-
-function getEventId(){
-  const url = new URL(location.href);
-  let id = url.searchParams.get("event");
-  if(!id){
-    id = Math.random().toString(36).slice(2);
-    url.searchParams.set("event", id);
-    history.replaceState({}, "", url.toString());
-  }
-  return id;
-}
-function getScreenMode(){
-  const url = new URL(location.href);
-  return url.searchParams.get("screen") === "viewer" ? "viewer" : "edit";
-}
-function getAdminKeyFromUrl(){
-  return new URL(location.href).searchParams.get("adminKey") || "";
-}
-function setAdminKeyInUrl(adminKey){
-  const url = new URL(location.href);
-  url.searchParams.set("event", eventId);
-  url.searchParams.set("screen", "edit");
-  url.searchParams.set("adminKey", adminKey);
-  history.replaceState({}, "", url.toString());
-}
-function buildUrl(mode){
-  const url = new URL(location.href);
-  url.searchParams.set("event", eventId);
-  url.searchParams.set("screen", mode === "viewer" ? "viewer" : "edit");
-  if(mode === "edit") url.searchParams.set("adminKey", state.adminKey || "");
-  else url.searchParams.delete("adminKey");
-  return url.toString();
-}
-function updateUrlForScreen(mode){
-  const url = new URL(location.href);
-  url.searchParams.set("event", eventId);
-  url.searchParams.set("screen", mode === "viewer" ? "viewer" : "edit");
-  if(mode === "edit" && isAdmin()) url.searchParams.set("adminKey", state.adminKey || "");
-  else url.searchParams.delete("adminKey");
-  history.replaceState({}, "", url.toString());
-}
-async function copyText(text, successMessage){
-  try{ await navigator.clipboard.writeText(text); setCompactStatus(successMessage, "ok"); }
-  catch(e){ console.error(e); setCompactStatus("コピー失敗", "err"); }
-}
-function isAdmin(){
-  return !!state.adminKey && getAdminKeyFromUrl() === state.adminKey;
-}
+function getEventId(){ const url = new URL(location.href); let id = url.searchParams.get("event"); if(!id){ id = Math.random().toString(36).slice(2); url.searchParams.set("event", id); history.replaceState({}, "", url.toString()); } return id; }
+function getScreenMode(){ const url = new URL(location.href); return url.searchParams.get("screen") === "viewer" ? "viewer" : "edit"; }
+function buildUrl(mode){ const url = new URL(location.href); url.searchParams.set("event", eventId); url.searchParams.set("screen", mode === "viewer" ? "viewer" : "edit"); return url.toString(); }
+function updateUrlForScreen(mode){ const url = new URL(location.href); url.searchParams.set("event", eventId); url.searchParams.set("screen", mode === "viewer" ? "viewer" : "edit"); history.replaceState({}, "", url.toString()); }
+async function copyText(text, successMessage){ try{ await navigator.clipboard.writeText(text); setCompactStatus(successMessage, "ok"); }catch(e){ console.error(e); setCompactStatus("コピー失敗", "err"); } }
 
 const eventId = getEventId();
 screenMode = getScreenMode();
 document.getElementById("versionLabel").textContent = APP_VERSION;
 document.getElementById("eventLabel").textContent = eventId;
 
-function setCompactStatus(text, kind=""){
-  const pill = document.getElementById("statusPill");
-  const textEl = document.getElementById("statusText");
-  textEl.textContent = text;
-  pill.className = `status-pill ${kind}`.trim();
-}
+function setCompactStatus(text, kind=""){ const pill = document.getElementById("statusPill"); const textEl = document.getElementById("statusText"); textEl.textContent = text; pill.className = `status-pill ${kind}`.trim(); }
 
 const state = {
   appVersion: APP_VERSION,
-  adminKey: "",
   title: "",
   location: "",
   deadline: "",
@@ -300,7 +197,6 @@ const state = {
 };
 
 function ensure(){
-  if(!state.adminKey) state.adminKey = crypto.randomUUID().slice(0, 12);
   state.participants.forEach((p, pi) => {
     if(!state.responses[p.id]) state.responses[p.id] = {};
     state.candidates.forEach((c, ci) => {
@@ -316,19 +212,14 @@ function ensure(){
   Object.keys(state.responses).forEach(pid => {
     if(!state.participants.some(p => p.id === pid)) delete state.responses[pid];
   });
-  if(state.participants.length && !viewerSelectedParticipantId){
-    viewerSelectedParticipantId = state.participants[0].id;
-  }
-  if(viewerSelectedParticipantId && !state.participants.some(p => p.id === viewerSelectedParticipantId)){
-    viewerSelectedParticipantId = state.participants[0]?.id || "";
-  }
+  if(state.participants.length && !viewerSelectedParticipantId) viewerSelectedParticipantId = state.participants[0].id;
+  if(viewerSelectedParticipantId && !state.participants.some(p => p.id === viewerSelectedParticipantId)) viewerSelectedParticipantId = state.participants[0]?.id || "";
 }
 
 function serializeState(){
   ensure();
   return {
     appVersion: APP_VERSION,
-    adminKey: state.adminKey,
     title: state.title,
     location: state.location,
     deadline: state.deadline,
@@ -342,48 +233,28 @@ function serializeState(){
 
 async function save(){
   if(isApplyingRemote) return;
-  try{
-    setCompactStatus("保存中", "warn");
-    await setDoc(doc(db, "events", eventId), serializeState(), { merge:true });
-    setCompactStatus("接続中", "ok");
-  }catch(e){
-    console.error(e);
-    setCompactStatus("保存失敗", "err");
-  }
+  try{ setCompactStatus("保存中", "warn"); await setDoc(doc(db, "events", eventId), serializeState(), { merge:true }); setCompactStatus("接続中", "ok"); }
+  catch(e){ console.error(e); setCompactStatus("保存失敗", "err"); }
 }
 function scheduleSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(save, 450); }
-
 function subscribe(){
   setCompactStatus("接続中...", "warn");
-  onSnapshot(doc(db, "events", eventId), async (snap) => {
+  onSnapshot(doc(db, "events", eventId), (snap) => {
     try{
       if(snap.exists()){
         isApplyingRemote = true;
         Object.assign(state, snap.data());
         ensure();
-        if(screenMode === 'edit' && isAdmin() && getAdminKeyFromUrl() !== state.adminKey){
-          setAdminKeyInUrl(state.adminKey);
-        }
         render();
         setCompactStatus(firstSnapshot ? "接続成功" : "同期中", "ok");
       }else{
-        ensure();
-        if(screenMode === 'edit') setAdminKeyInUrl(state.adminKey);
         render();
-        await save();
+        save();
         setCompactStatus("新規イベント", "ok");
       }
-    }catch(e){
-      console.error(e);
-      setCompactStatus("描画エラー", "err");
-    }finally{
-      firstSnapshot = false;
-      isApplyingRemote = false;
-    }
-  }, (error) => {
-    console.error(error);
-    setCompactStatus("接続エラー", "err");
-  });
+    }catch(e){ console.error(e); setCompactStatus("描画エラー", "err"); }
+    finally{ firstSnapshot = false; isApplyingRemote = false; }
+  }, (error) => { console.error(error); setCompactStatus("接続エラー", "err"); });
 }
 
 function calc(){
@@ -407,36 +278,14 @@ function renderEditor(){
   organizer.value = state.organizer || "";
   desc.value = state.desc || "";
 
-  cList.innerHTML = state.candidates.map((c, i) => `
-    <div class="list-item">
-      <div><strong>候補${i+1}: ${esc(c.date)} ${esc(c.time || "")}</strong><small>回答表とランキングに反映中</small></div>
-      <button class="btn-danger" type="button" data-cdel="${c.id}">削除</button>
-    </div>
-  `).join("");
-  document.querySelectorAll("[data-cdel]").forEach(btn => {
-    btn.onclick = () => { state.candidates = state.candidates.filter(c => c.id !== btn.dataset.cdel); render(); scheduleSave(); };
-  });
+  cList.innerHTML = state.candidates.map((c, i) => `<div class="list-item"><div><strong>候補${i+1}: ${esc(c.date)} ${esc(c.time || "")}</strong><small>回答表とランキングに反映中</small></div><button class="btn-danger" type="button" data-cdel="${c.id}">削除</button></div>`).join("");
+  document.querySelectorAll("[data-cdel]").forEach(btn => btn.onclick = () => { state.candidates = state.candidates.filter(c => c.id !== btn.dataset.cdel); render(); scheduleSave(); });
 
-  pList.innerHTML = state.participants.map((p) => `
-    <div class="participant-row">
-      <input value="${esc(p.name)}" data-pname="${p.id}" placeholder="参加者名">
-      <input value="${esc(p.role || "")}" data-prole="${p.id}" placeholder="役割">
-      <label class="toggle-chip"><input type="checkbox" data-pimp="${p.id}" ${p.important ? "checked" : ""}> 重要人物</label>
-      <button class="btn-danger" type="button" data-pdel="${p.id}">削除</button>
-    </div>
-  `).join("");
-  document.querySelectorAll("[data-pname]").forEach(input => {
-    input.oninput = () => { const t = state.participants.find(p => p.id === input.dataset.pname); if(t){ t.name = input.value; renderEditorTable(); renderViewer(); scheduleSave(); } };
-  });
-  document.querySelectorAll("[data-prole]").forEach(input => {
-    input.oninput = () => { const t = state.participants.find(p => p.id === input.dataset.prole); if(t){ t.role = input.value; renderEditorTable(); renderViewer(); scheduleSave(); } };
-  });
-  document.querySelectorAll("[data-pimp]").forEach(input => {
-    input.onchange = () => { const t = state.participants.find(p => p.id === input.dataset.pimp); if(t){ t.important = input.checked; renderEditorTable(); renderViewer(); renderResult(); renderRanking(); scheduleSave(); } };
-  });
-  document.querySelectorAll("[data-pdel]").forEach(btn => {
-    btn.onclick = () => { state.participants = state.participants.filter(p => p.id !== btn.dataset.pdel); delete state.responses[btn.dataset.pdel]; render(); scheduleSave(); };
-  });
+  pList.innerHTML = state.participants.map((p) => `<div class="participant-row"><input value="${esc(p.name)}" data-pname="${p.id}" placeholder="参加者名"><input value="${esc(p.role || "")}" data-prole="${p.id}" placeholder="役割"><label class="toggle-chip"><input type="checkbox" data-pimp="${p.id}" ${p.important ? "checked" : ""}> 重要人物</label><button class="btn-danger" type="button" data-pdel="${p.id}">削除</button></div>`).join("");
+  document.querySelectorAll("[data-pname]").forEach(input => input.oninput = () => { const t = state.participants.find(p => p.id === input.dataset.pname); if(t){ t.name = input.value; renderEditorTable(); renderViewer(); scheduleSave(); } });
+  document.querySelectorAll("[data-prole]").forEach(input => input.oninput = () => { const t = state.participants.find(p => p.id === input.dataset.prole); if(t){ t.role = input.value; renderEditorTable(); renderViewer(); scheduleSave(); } });
+  document.querySelectorAll("[data-pimp]").forEach(input => input.onchange = () => { const t = state.participants.find(p => p.id === input.dataset.pimp); if(t){ t.important = input.checked; renderEditorTable(); renderViewer(); renderResult(); renderRanking(); scheduleSave(); } });
+  document.querySelectorAll("[data-pdel]").forEach(btn => btn.onclick = () => { state.participants = state.participants.filter(p => p.id !== btn.dataset.pdel); delete state.responses[btn.dataset.pdel]; render(); scheduleSave(); });
 
   renderEditorTable();
   renderResult();
@@ -458,120 +307,49 @@ function renderEditorTable(){
   });
   html += '</tbody></table>';
   table.innerHTML = html;
-  document.querySelectorAll("[data-response]").forEach(select => {
-    select.onchange = () => {
-      const [pid, cid] = select.dataset.response.split("|");
-      state.responses[pid][cid] = select.value;
-      renderResult(); renderRanking(); renderViewer(); scheduleSave();
-    };
-  });
+  document.querySelectorAll("[data-response]").forEach(select => select.onchange = () => { const [pid, cid] = select.dataset.response.split("|"); state.responses[pid][cid] = select.value; renderResult(); renderRanking(); renderViewer(); scheduleSave(); });
 }
 
 function renderResult(){
   const ranked = calc();
   if(!ranked.length){ result.innerHTML = '候補日がありません。'; return; }
   const top = ranked[0];
-  result.innerHTML = `
-    <strong>${esc(state.title || '予定名未設定')}</strong>
-    <div class="result-meta">
-      <span class="meta-chip">場所: ${esc(state.location || '未設定')}</span>
-      <span class="meta-chip">回答締切日時: ${esc(state.deadline || '未設定')}</span>
-      <span class="meta-chip">幹事: ${esc(state.organizer || '未設定')}</span>
-      <span class="meta-chip">保存版: ${esc(state.appVersion || APP_VERSION)}</span>
-    </div>
-    <div style="font-size:20px;font-weight:800;margin-bottom:8px;">第一候補: ${esc(top.c.date)} ${esc(top.c.time || '')}</div>
-    <div class="small">最も波風が立ちにくい候補です。重要人物が出席可能な候補は強く評価されます。</div>
-  `;
+  result.innerHTML = `<strong>${esc(state.title || '予定名未設定')}</strong><div class="result-meta"><span class="meta-chip">場所: ${esc(state.location || '未設定')}</span><span class="meta-chip">回答締切日時: ${esc(state.deadline || '未設定')}</span><span class="meta-chip">幹事: ${esc(state.organizer || '未設定')}</span><span class="meta-chip">保存版: ${esc(state.appVersion || APP_VERSION)}</span></div><div style="font-size:20px;font-weight:800;margin-bottom:8px;">第一候補: ${esc(top.c.date)} ${esc(top.c.time || '')}</div><div class="small">最も波風が立ちにくい候補です。</div>`;
 }
 
 function renderRanking(){
   const ranked = calc();
-  ranking.innerHTML = ranked.map((item, index) => `
-    <div class="rank-card ${index===0?'top':''}">
-      <div class="rank-head"><div><strong>${index===0?'👑 第一候補':`候補 ${index+1}`}</strong><div class="small">${esc(item.c.date)} ${esc(item.c.time || '')}</div></div><div class="score">Score ${item.score}</div></div>
-      <div class="pills"><span class="pill ok">○ ${item.ok}</span><span class="pill maybe">△ ${item.maybe}</span><span class="pill ng">× ${item.ng}</span></div>
-      <div class="rank-reason">重要人物参加可: ${item.importantOk}人。${item.ng >= 2 ? '少し荒れそうです。' : '比較的穏当に決めやすい候補です。'}</div>
-    </div>
-  `).join("");
+  ranking.innerHTML = ranked.map((item, index) => `<div class="rank-card ${index===0?'top':''}"><div class="rank-head"><div><strong>${index===0?'👑 第一候補':`候補 ${index+1}`}</strong><div class="small">${esc(item.c.date)} ${esc(item.c.time || '')}</div></div><div class="score">Score ${item.score}</div></div><div class="pills"><span class="pill ok">○ ${item.ok}</span><span class="pill maybe">△ ${item.maybe}</span><span class="pill ng">× ${item.ng}</span></div><div class="rank-reason">重要人物参加可: ${item.importantOk}人。${item.ng >= 2 ? '少し荒れそうです。' : '比較的穏当に決めやすい候補です。'}</div></div>`).join("");
 }
 
 function renderViewer(){
   const ranked = calc();
   const top = ranked[0];
-  viewerHero.innerHTML = `
-    <strong>${esc(state.title || '予定名未設定')}</strong>
-    <div class="viewer-meta">
-      <span class="meta-chip">場所: ${esc(state.location || '未設定')}</span>
-      <span class="meta-chip">回答締切日時: ${esc(state.deadline || '未設定')}</span>
-      <span class="meta-chip">幹事: ${esc(state.organizer || '未設定')}</span>
-    </div>
-    <div style="font-size:22px;font-weight:800;margin-bottom:8px;">${top ? `第一候補: ${esc(top.c.date)} ${esc(top.c.time || '')}` : '候補日未設定'}</div>
-    <div class="small" style="line-height:1.8;">${esc(state.desc || '説明は未入力です。')}</div>
-  `;
+  viewerHero.innerHTML = `<strong>${esc(state.title || '予定名未設定')}</strong><div class="viewer-meta"><span class="meta-chip">場所: ${esc(state.location || '未設定')}</span><span class="meta-chip">回答締切日時: ${esc(state.deadline || '未設定')}</span><span class="meta-chip">幹事: ${esc(state.organizer || '未設定')}</span></div><div style="font-size:22px;font-weight:800;margin-bottom:8px;">${top ? `第一候補: ${esc(top.c.date)} ${esc(top.c.time || '')}` : '候補日未設定'}</div><div class="small" style="line-height:1.8;">${esc(state.desc || '説明は未入力です。')}</div>`;
 
-  viewerCandidates.innerHTML = ranked.length ? ranked.map((item, index) => `
-    <div class="viewer-candidate ${index===0?'top':''}">
-      <div class="viewer-candidate-head"><div><strong>${index===0?'👑 第一候補':`候補 ${index+1}`}</strong><div class="small">${esc(item.c.date)} ${esc(item.c.time || '')}</div></div><div class="score">Score ${item.score}</div></div>
-      <div class="pills"><span class="pill ok">○ ${item.ok}</span><span class="pill maybe">△ ${item.maybe}</span><span class="pill ng">× ${item.ng}</span></div>
-      <div class="viewer-reason">重要人物参加可: ${item.importantOk}人。</div>
-    </div>
-  `).join("") : '<div class="note">候補日がありません。</div>';
+  viewerCandidates.innerHTML = ranked.length ? ranked.map((item, index) => `<div class="viewer-candidate ${index===0?'top':''}"><div class="viewer-candidate-head"><div><strong>${index===0?'👑 第一候補':`候補 ${index+1}`}</strong><div class="small">${esc(item.c.date)} ${esc(item.c.time || '')}</div></div><div class="score">Score ${item.score}</div></div><div class="pills"><span class="pill ok">○ ${item.ok}</span><span class="pill maybe">△ ${item.maybe}</span><span class="pill ng">× ${item.ng}</span></div></div>`).join("") : '<div class="small">候補日がありません。</div>';
 
   viewerParticipantSelect.innerHTML = state.participants.map(p => `<option value="${p.id}" ${p.id===viewerSelectedParticipantId?'selected':''}>${esc(p.name || '参加者')}</option>`).join('');
-  viewerAccessNote.classList.toggle('hidden', isAdmin());
-
-  if(!state.participants.length || !state.candidates.length){
-    viewerResponseEditor.innerHTML = '<div class="small">参加者と候補日が揃うと回答できます。</div>';
-    return;
-  }
+  if(!state.participants.length || !state.candidates.length){ viewerResponseEditor.innerHTML = '<div class="small">参加者と候補日が揃うと回答できます。</div>'; return; }
   const participant = state.participants.find(p => p.id === viewerSelectedParticipantId) || state.participants[0];
   if(participant) viewerSelectedParticipantId = participant.id;
   viewerResponseEditor.innerHTML = state.candidates.map(c => {
     const v = state.responses[participant.id]?.[c.id] || 'maybe';
-    return `
-      <div class="viewer-response-card">
-        <h3>${esc(c.date)} ${esc(c.time || '')}</h3>
-        <div class="viewer-response-row">
-          <div class="small">${esc(participant.name || '参加者')} さんの参加状況</div>
-          <select class="status-select" data-viewer-response="${participant.id}|${c.id}">
-            <option value="ok" ${v==='ok'?'selected':''}>○ 参加可</option>
-            <option value="maybe" ${v==='maybe'?'selected':''}>△ 調整可</option>
-            <option value="ng" ${v==='ng'?'selected':''}>× 不可</option>
-          </select>
-        </div>
-      </div>
-    `;
+    return `<div class="viewer-response-card"><h3>${esc(c.date)} ${esc(c.time || '')}</h3><div class="viewer-response-row"><div class="small">${esc(participant.name || '参加者')} さんの参加状況</div><select class="status-select" data-viewer-response="${participant.id}|${c.id}"><option value="ok" ${v==='ok'?'selected':''}>○ 参加可</option><option value="maybe" ${v==='maybe'?'selected':''}>△ 調整可</option><option value="ng" ${v==='ng'?'selected':''}>× 不可</option></select></div></div>`;
   }).join('');
-
-  document.querySelectorAll('[data-viewer-response]').forEach(select => {
-    select.onchange = () => {
-      const [pid, cid] = select.dataset.viewerResponse.split('|');
-      state.responses[pid][cid] = select.value;
-      renderViewer();
-      if(isAdmin()) renderEditorTable(), renderResult(), renderRanking();
-      scheduleSave();
-    };
-  });
+  document.querySelectorAll('[data-viewer-response]').forEach(select => select.onchange = () => { const [pid, cid] = select.dataset.viewerResponse.split('|'); state.responses[pid][cid] = select.value; renderViewer(); renderEditorTable(); renderResult(); renderRanking(); scheduleSave(); });
 }
 
 function applyScreenMode(mode){
   screenMode = mode === 'viewer' ? 'viewer' : 'edit';
-  const admin = isAdmin();
-  if(screenMode === 'edit' && !admin) screenMode = 'viewer';
   editorScreen.classList.toggle('hidden', screenMode !== 'edit');
   viewerScreen.classList.toggle('hidden', screenMode !== 'viewer');
   editModeBtn.classList.toggle('active', screenMode === 'edit');
   viewerModeBtn.classList.toggle('active', screenMode === 'viewer');
-  editModeBtn.classList.toggle('hidden', !admin);
   updateUrlForScreen(screenMode);
 }
 
-function render(){
-  ensure();
-  renderEditor();
-  renderViewer();
-  applyScreenMode(screenMode);
-}
+function render(){ ensure(); renderEditor(); renderViewer(); applyScreenMode(screenMode); }
 
 focusCandidateBtn.onclick = () => d.focus();
 addC.onclick = () => { if(!d.value) return; state.candidates.push({ id: uid(), date: d.value, time: t.value || '18:00' }); render(); scheduleSave(); };
@@ -586,8 +364,8 @@ desc.oninput = e => { state.desc = e.target.value; renderViewer(); scheduleSave(
 viewerParticipantSelect.onchange = e => { viewerSelectedParticipantId = e.target.value; renderViewer(); };
 editModeBtn.onclick = () => applyScreenMode('edit');
 viewerModeBtn.onclick = () => applyScreenMode('viewer');
-copyEditUrlBtn.onclick = () => copyText(buildUrl('edit'), '編集URLをコピー');
-copyViewerUrlBtn.onclick = () => copyText(buildUrl('viewer'), '閲覧URLをコピー');
+copyEditUrlBtn.onclick = () => copyText(buildUrl('edit'), '編集用URLをコピー');
+copyViewerUrlBtn.onclick = () => copyText(buildUrl('viewer'), '閲覧用URLをコピー');
 
 render();
 setCompactStatus('接続待機中', 'warn');
