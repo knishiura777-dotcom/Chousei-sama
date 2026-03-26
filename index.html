@@ -103,7 +103,7 @@ function renderParticipants(){
 
 function renderTable(){
   let html='<table><tr><th></th>';
-  state.candidates.forEach(c=>html+=`<th>${c.date}</th>`);
+  state.candidates.forEach(c=>html+=`<th>${c.date}<br><span class="small">${c.time || ''}</span></th>`);
   html+='</tr>';
   state.participants.forEach(p=>{
     html+=`<tr><td>${p.name}</td>`;
