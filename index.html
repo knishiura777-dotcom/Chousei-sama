@@ -164,6 +164,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 let isApplyingRemote = false;
 let saveTimer = null;
+let previewTimer = null;
 let firstSnapshot = true;
 let screenMode = "edit";
 let viewerSelectedParticipantId = "";
@@ -236,12 +237,26 @@ async function save(){
   try{ setCompactStatus("保存中", "warn"); await setDoc(doc(db, "events", eventId), serializeState(), { merge:true }); setCompactStatus("接続中", "ok"); }
   catch(e){ console.error(e); setCompactStatus("保存失敗", "err"); }
 }
-function scheduleSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(save, 450); }
+function scheduleSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(save, 650); }
+function scheduleViewerRefresh(){
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(() => {
+    renderViewer();
+    renderResult();
+    renderRanking();
+  }, 180);
+}
 function subscribe(){
   setCompactStatus("接続中...", "warn");
   onSnapshot(doc(db, "events", eventId), (snap) => {
     try{
       if(snap.exists()){
+        const incoming = JSON.stringify(snap.data());
+        const current = JSON.stringify(serializeState());
+        if(!firstSnapshot && incoming === current){
+          setCompactStatus("同期中", "ok");
+          return;
+        }
         isApplyingRemote = true;
         Object.assign(state, snap.data());
         ensure();
@@ -282,8 +297,34 @@ function renderEditor(){
   document.querySelectorAll("[data-cdel]").forEach(btn => btn.onclick = () => { state.candidates = state.candidates.filter(c => c.id !== btn.dataset.cdel); render(); scheduleSave(); });
 
   pList.innerHTML = state.participants.map((p) => `<div class="participant-row"><input value="${esc(p.name)}" data-pname="${p.id}" placeholder="参加者名"><input value="${esc(p.role || "")}" data-prole="${p.id}" placeholder="役割"><label class="toggle-chip"><input type="checkbox" data-pimp="${p.id}" ${p.important ? "checked" : ""}> 重要人物</label><button class="btn-danger" type="button" data-pdel="${p.id}">削除</button></div>`).join("");
-  document.querySelectorAll("[data-pname]").forEach(input => input.oninput = () => { const t = state.participants.find(p => p.id === input.dataset.pname); if(t){ t.name = input.value; renderEditorTable(); renderViewer(); scheduleSave(); } });
-  document.querySelectorAll("[data-prole]").forEach(input => input.oninput = () => { const t = state.participants.find(p => p.id === input.dataset.prole); if(t){ t.role = input.value; renderEditorTable(); renderViewer(); scheduleSave(); } });
+  document.querySelectorAll("[data-pname]").forEach(input => {
+    input.oninput = () => {
+      const t = state.participants.find(p => p.id === input.dataset.pname);
+      if(t){
+        t.name = input.value;
+        scheduleViewerRefresh();
+        scheduleSave();
+      }
+    };
+    input.onblur = () => {
+      renderEditorTable();
+      renderViewer();
+    };
+  });
+  document.querySelectorAll("[data-prole]").forEach(input => {
+    input.oninput = () => {
+      const t = state.participants.find(p => p.id === input.dataset.prole);
+      if(t){
+        t.role = input.value;
+        scheduleViewerRefresh();
+        scheduleSave();
+      }
+    };
+    input.onblur = () => {
+      renderEditorTable();
+      renderViewer();
+    };
+  });
   document.querySelectorAll("[data-pimp]").forEach(input => input.onchange = () => { const t = state.participants.find(p => p.id === input.dataset.pimp); if(t){ t.important = input.checked; renderEditorTable(); renderViewer(); renderResult(); renderRanking(); scheduleSave(); } });
   document.querySelectorAll("[data-pdel]").forEach(btn => btn.onclick = () => { state.participants = state.participants.filter(p => p.id !== btn.dataset.pdel); delete state.responses[btn.dataset.pdel]; render(); scheduleSave(); });
 
