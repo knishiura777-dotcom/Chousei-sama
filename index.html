@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>調整様 v0.5.1</title>
+<title>調整様 v0.6.0</title>
 <style>
   :root{
     --bg:#f3f6fb;--panel:rgba(255,255,255,.84);--line:rgba(148,163,184,.22);--line-strong:rgba(148,163,184,.34);
@@ -47,16 +47,19 @@
   .toggle-chip,.meta-chip{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:999px;border:1px solid var(--line);background:#f8fafc;font-size:12px;font-weight:800;color:#334155;white-space:nowrap}.toggle-chip input{width:auto;margin:0}
   .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:20px;background:rgba(255,255,255,.86)}
   table{width:100%;border-collapse:collapse;min-width:720px}th,td{padding:12px;border-bottom:1px solid #edf2f7;text-align:left;vertical-align:middle}th{background:rgba(248,250,252,.95);font-size:12px;font-weight:800;color:#334155;position:sticky;top:0;z-index:1}tr:last-child td{border-bottom:none}
-  .result-box,.viewer-hero{padding:18px;border-radius:22px;background:linear-gradient(180deg,#eff6ff 0%, #ffffff 100%);border:1px solid #bfdbfe;line-height:1.75}.result-box strong,.viewer-hero strong{display:block;font-size:22px;letter-spacing:-.03em}.result-meta,.viewer-meta{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 14px}
+  .result-box,.viewer-hero,.ai-panel{padding:18px;border-radius:22px;background:linear-gradient(180deg,#eff6ff 0%, #ffffff 100%);border:1px solid #bfdbfe;line-height:1.75}
+  .result-box strong,.viewer-hero strong{display:block;font-size:22px;letter-spacing:-.03em}.result-meta,.viewer-meta{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 14px}
   .rank-card,.viewer-candidate,.viewer-response-card{padding:16px;border-radius:20px;border:1px solid var(--line);background:rgba(255,255,255,.78)}
   .rank-card.top,.viewer-candidate.top{border:2px solid rgba(37,99,235,.22);background:linear-gradient(180deg,rgba(239,246,255,.92) 0%, rgba(255,255,255,.94) 100%)}
   .rank-head,.viewer-candidate-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px}
   .score{display:inline-flex;padding:8px 10px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:800}
   .pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border-radius:999px;font-size:12px;font-weight:800}.pill.ok{background:#dcfce7;color:#166534}.pill.maybe{background:#ffedd5;color:#9a3412}.pill.ng{background:#fee2e2;color:#991b1b}
-  .rank-reason,.viewer-reason{margin-top:10px;color:var(--sub);font-size:13px;line-height:1.7}.viewer-card h3,.viewer-response-card h3{margin:0 0 10px;font-size:18px}.viewer-response-row{display:grid;grid-template-columns:1fr 170px;gap:10px;align-items:center;margin-bottom:10px}
+  .rank-reason,.viewer-reason{margin-top:10px;color:var(--sub);font-size:13px;line-height:1.7}.viewer-card h3,.viewer-response-card h3,.ai-panel h3{margin:0 0 10px;font-size:18px}.viewer-response-row{display:grid;grid-template-columns:1fr 170px;gap:10px;align-items:center;margin-bottom:10px}
+  .ai-panel{margin-bottom:18px;background:linear-gradient(180deg,rgba(239,246,255,.92) 0%, rgba(255,255,255,.96) 100%)}
+  .ai-row{display:grid;grid-template-columns:1fr 280px;gap:12px;align-items:start}
   .hidden{display:none !important}
   @media (max-width:1100px){.layout{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
-  @media (max-width:760px){body{padding:14px}.topbar,.grid-2,.candidate-add,.participant-row,.viewer-response-row{display:grid;grid-template-columns:1fr}.meta-strip,.actions{justify-content:flex-start}table{min-width:640px}}
+  @media (max-width:760px){body{padding:14px}.topbar,.grid-2,.candidate-add,.participant-row,.viewer-response-row,.ai-row{display:grid;grid-template-columns:1fr}.meta-strip,.actions{justify-content:flex-start}table{min-width:640px}}
 </style>
 </head>
 <body>
@@ -68,7 +71,7 @@
       <div class="lede">編集用と閲覧用をシンプルに切り替えます。閲覧画面では参加者が自分の参加可否だけを更新できます。</div>
     </div>
     <div class="meta-strip">
-      <div class="meta-pill">version <span id="versionLabel">0.5.1</span></div>
+      <div class="meta-pill">version <span id="versionLabel">0.6.0</span></div>
       <div id="statusPill" class="status-pill"><span class="status-dot"></span><span id="statusText">未接続</span></div>
       <div class="meta-pill">event <span id="eventLabel">-</span></div>
     </div>
@@ -80,8 +83,35 @@
       <button id="viewerModeBtn" class="mode-btn" type="button">閲覧用</button>
     </div>
     <div class="actions">
+      <button id="toggleMagicSetupBtn" class="btn-soft" type="button">✨ AIセットアップ</button>
       <button id="copyEditUrlBtn" class="btn-ghost" type="button">編集用URLをコピー</button>
       <button id="copyViewerUrlBtn" class="btn-primary" type="button">閲覧用URLをコピー</button>
+    </div>
+  </div>
+
+  <div id="magicSetupPanel" class="ai-panel hidden">
+    <div class="section-head">
+      <div>
+        <h3>✨ AI MAGIC SETUP</h3>
+        <p>自然文から予定名・説明・候補日・参加者をまとめて自動入力します。</p>
+      </div>
+      <div class="actions">
+        <button id="runMagicSetupBtn" class="btn-primary" type="button">AIで流し込む</button>
+        <button id="closeMagicSetupBtn" class="btn-ghost" type="button">閉じる</button>
+      </div>
+    </div>
+    <div class="ai-row">
+      <div class="field">
+        <div class="label-row"><label for="magicSetupPrompt">自然文入力</label><span class="hint">例: 来週の月曜の夜に、西浦さんと佐藤さんを呼んで飲み会</span></div>
+        <textarea id="magicSetupPrompt" placeholder="例: 来週の月曜の夜に、西浦さんと佐藤さんを呼んで飲み会"></textarea>
+      </div>
+      <div class="stack">
+        <div class="field">
+          <div class="label-row"><label for="geminiApiKey">Gemini API Key</label><span class="hint">試作用のみブラウザ保存</span></div>
+          <input id="geminiApiKey" type="password" placeholder="AIza..." />
+        </div>
+        <div class="small">このプロトタイプではブラウザから Gemini API を直接呼びます。保存先はローカルストレージです。</div>
+      </div>
     </div>
   </div>
 
@@ -148,7 +178,9 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
 import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-const APP_VERSION = "0.5.1";
+const APP_VERSION = "0.6.0";
+const GEMINI_MODEL = "gemini-2.5-flash";
+const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 const firebaseConfig = {
   apiKey: "AIzaSyBTXGKYfhPoPqOwgwzoC78N1R7f0He67j0",
   authDomain: "chousei-sama-85eed.firebaseapp.com",
@@ -169,33 +201,36 @@ let viewerSelectedParticipantId = "";
 
 function uid(){ return Math.random().toString(36).slice(2,9); }
 function esc(s){ return String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;"); }
-function getActiveInputState(){
-  const el = document.activeElement;
-  if(!el || !(el instanceof HTMLInputElement)) return null;
-  if(el.dataset.pname) return { type: 'pname', id: el.dataset.pname, start: el.selectionStart ?? null, end: el.selectionEnd ?? null };
-  if(el.dataset.prole) return { type: 'prole', id: el.dataset.prole, start: el.selectionStart ?? null, end: el.selectionEnd ?? null };
-  return null;
-}
-function restoreActiveInputState(active){
-  if(!active) return;
-  const selector = active.type === 'pname' ? `[data-pname="${active.id}"]` : `[data-prole="${active.id}"]`;
-  const el = document.querySelector(selector);
-  if(!el) return;
-  el.focus();
-  if(typeof active.start === 'number' && typeof active.end === 'number'){
-    try { el.setSelectionRange(active.start, active.end); } catch {}
-  }
-}
+function availabilityLabel(v){ return v === 'ok' ? '○ 参加可' : v === 'maybe' ? '△ 調整可' : '× 不可'; }
 function getEventId(){ const url = new URL(location.href); let id = url.searchParams.get("event"); if(!id){ id = Math.random().toString(36).slice(2); url.searchParams.set("event", id); history.replaceState({}, "", url.toString()); } return id; }
 function getScreenMode(){ const url = new URL(location.href); return url.searchParams.get("screen") === "viewer" ? "viewer" : "edit"; }
 function buildUrl(mode){ const url = new URL(location.href); url.searchParams.set("event", eventId); url.searchParams.set("screen", mode === "viewer" ? "viewer" : "edit"); return url.toString(); }
 function updateUrlForScreen(mode){ const url = new URL(location.href); url.searchParams.set("event", eventId); url.searchParams.set("screen", mode === "viewer" ? "viewer" : "edit"); history.replaceState({}, "", url.toString()); }
 async function copyText(text, successMessage){ try{ await navigator.clipboard.writeText(text); setCompactStatus(successMessage, "ok"); }catch(e){ console.error(e); setCompactStatus("コピー失敗", "err"); } }
+function getTokyoNowText(){ return new Intl.DateTimeFormat('ja-JP',{ timeZone:'Asia/Tokyo', dateStyle:'full', timeStyle:'short' }).format(new Date()); }
+function normalizeCandidate(item){
+  if(!item) return null;
+  if(item.date && item.time) return { id: uid(), date: item.date, time: item.time };
+  if(item.datetime){
+    const d = new Date(item.datetime);
+    if(!isNaN(d)){
+      const iso = new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,16);
+      return { id: uid(), date: iso.slice(0,10), time: iso.slice(11,16) };
+    }
+  }
+  return null;
+}
+function stripJsonFence(text){
+  return text.replace(/^```json\s*/i,'').replace(/^```\s*/i,'').replace(/```\s*$/,'').trim();
+}
+function loadGeminiKey(){ return localStorage.getItem('gemini_api_key') || ''; }
+function saveGeminiKey(key){ localStorage.setItem('gemini_api_key', key); }
 
 const eventId = getEventId();
 screenMode = getScreenMode();
 document.getElementById("versionLabel").textContent = APP_VERSION;
 document.getElementById("eventLabel").textContent = eventId;
+geminiApiKey.value = loadGeminiKey();
 
 function setCompactStatus(text, kind=""){ const pill = document.getElementById("statusPill"); const textEl = document.getElementById("statusText"); textEl.textContent = text; pill.className = `status-pill ${kind}`.trim(); }
 
@@ -220,7 +255,6 @@ function ensure(){
   if(state.participants.length && !viewerSelectedParticipantId) viewerSelectedParticipantId = state.participants[0].id;
   if(viewerSelectedParticipantId && !state.participants.some(p => p.id === viewerSelectedParticipantId)) viewerSelectedParticipantId = state.participants[0]?.id || "";
 }
-
 function serializeState(){ ensure(); return { appVersion: APP_VERSION, title: state.title, location: state.location, deadline: state.deadline, organizer: state.organizer, desc: state.desc, candidates: state.candidates, participants: state.participants, responses: state.responses }; }
 
 async function save(){
@@ -229,14 +263,7 @@ async function save(){
   catch(e){ console.error(e); setCompactStatus("保存失敗", "err"); }
 }
 function scheduleSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(save, 650); }
-function schedulePreviewRefresh(){
-  clearTimeout(previewTimer);
-  previewTimer = setTimeout(() => {
-    renderViewer();
-    renderResult();
-    renderRanking();
-  }, 180);
-}
+function schedulePreviewRefresh(){ clearTimeout(previewTimer); previewTimer = setTimeout(() => { renderViewer(); renderResult(); renderRanking(); }, 180); }
 function subscribe(){
   setCompactStatus("接続中...", "warn");
   onSnapshot(doc(db, "events", eventId), (snap) => {
@@ -244,16 +271,11 @@ function subscribe(){
       if(snap.exists()){
         const incoming = JSON.stringify(snap.data());
         const current = JSON.stringify(serializeState());
-        if(!firstSnapshot && incoming === current){
-          setCompactStatus("同期中", "ok");
-          return;
-        }
-        const active = getActiveInputState();
+        if(!firstSnapshot && incoming === current){ setCompactStatus("同期中", "ok"); return; }
         isApplyingRemote = true;
         Object.assign(state, snap.data());
         ensure();
         render();
-        restoreActiveInputState(active);
         setCompactStatus(firstSnapshot ? "接続成功" : "同期中", "ok");
       }else{
         render();
@@ -289,25 +311,17 @@ function renderEditor(){
   cList.innerHTML = state.candidates.map((c, i) => `<div class="list-item"><div><strong>候補${i+1}: ${esc(c.date)} ${esc(c.time || "")}</strong><small>回答表とランキングに反映中</small></div><button class="btn-danger" type="button" data-cdel="${c.id}">削除</button></div>`).join("");
   document.querySelectorAll("[data-cdel]").forEach(btn => btn.onclick = () => { state.candidates = state.candidates.filter(c => c.id !== btn.dataset.cdel); render(); scheduleSave(); });
 
-  const active = getActiveInputState();
   pList.innerHTML = state.participants.map((p) => `<div class="participant-row"><input value="${esc(p.name)}" data-pname="${p.id}" placeholder="参加者名"><input value="${esc(p.role || "")}" data-prole="${p.id}" placeholder="役割"><label class="toggle-chip"><input type="checkbox" data-pimp="${p.id}" ${p.important ? "checked" : ""}> 重要人物</label><button class="btn-danger" type="button" data-pdel="${p.id}">削除</button></div>`).join("");
   document.querySelectorAll("[data-pname]").forEach(input => {
-    input.oninput = () => {
-      const t = state.participants.find(p => p.id === input.dataset.pname);
-      if(t){ t.name = input.value; schedulePreviewRefresh(); scheduleSave(); }
-    };
+    input.oninput = () => { const t = state.participants.find(p => p.id === input.dataset.pname); if(t){ t.name = input.value; schedulePreviewRefresh(); scheduleSave(); } };
     input.onblur = () => { renderEditorTable(); renderViewer(); };
   });
   document.querySelectorAll("[data-prole]").forEach(input => {
-    input.oninput = () => {
-      const t = state.participants.find(p => p.id === input.dataset.prole);
-      if(t){ t.role = input.value; schedulePreviewRefresh(); scheduleSave(); }
-    };
+    input.oninput = () => { const t = state.participants.find(p => p.id === input.dataset.prole); if(t){ t.role = input.value; schedulePreviewRefresh(); scheduleSave(); } };
     input.onblur = () => { renderEditorTable(); renderViewer(); };
   });
   document.querySelectorAll("[data-pimp]").forEach(input => input.onchange = () => { const t = state.participants.find(p => p.id === input.dataset.pimp); if(t){ t.important = input.checked; renderEditorTable(); renderViewer(); renderResult(); renderRanking(); scheduleSave(); } });
   document.querySelectorAll("[data-pdel]").forEach(btn => btn.onclick = () => { state.participants = state.participants.filter(p => p.id !== btn.dataset.pdel); delete state.responses[btn.dataset.pdel]; render(); scheduleSave(); });
-  restoreActiveInputState(active);
 
   renderEditorTable();
   renderResult();
@@ -371,6 +385,104 @@ function applyScreenMode(mode){
   updateUrlForScreen(screenMode);
 }
 
+function applyMagicSetup(data){
+  if(data.title) state.title = data.title;
+  if(data.description) state.desc = data.description;
+  if(data.location) state.location = data.location;
+  if(data.responseDeadline) state.deadline = data.responseDeadline;
+  if(Array.isArray(data.participants) && data.participants.length){
+    state.participants = data.participants.map((p, idx) => {
+      if(typeof p === 'string') return { id: uid(), name: p, role: '', important: false };
+      return { id: uid(), name: p.name || `参加者${idx+1}`, role: p.role || '', important: !!p.important };
+    });
+  }
+  if(Array.isArray(data.candidates) && data.candidates.length){
+    const normalized = data.candidates.map(normalizeCandidate).filter(Boolean);
+    if(normalized.length) state.candidates = normalized;
+  }
+  state.responses = {};
+  render();
+  scheduleSave();
+}
+
+async function runMagicSetup(){
+  const apiKey = geminiApiKey.value.trim();
+  const prompt = magicSetupPrompt.value.trim();
+  if(!apiKey){ setCompactStatus('Geminiキー未入力', 'err'); geminiApiKey.focus(); return; }
+  if(!prompt){ setCompactStatus('自然文を入力してください', 'err'); magicSetupPrompt.focus(); return; }
+  saveGeminiKey(apiKey);
+  setCompactStatus('AI解析中', 'warn');
+
+  const nowText = getTokyoNowText();
+  const schema = {
+    type: 'OBJECT',
+    properties: {
+      title: { type: 'STRING' },
+      description: { type: 'STRING' },
+      location: { type: 'STRING' },
+      responseDeadline: { type: 'STRING', description: 'YYYY-MM-DDTHH:MM format if inferable, else empty string' },
+      participants: {
+        type: 'ARRAY',
+        items: {
+          type: 'OBJECT',
+          properties: {
+            name: { type: 'STRING' },
+            role: { type: 'STRING' },
+            important: { type: 'BOOLEAN' }
+          },
+          required: ['name']
+        }
+      },
+      candidates: {
+        type: 'ARRAY',
+        items: {
+          type: 'OBJECT',
+          properties: {
+            date: { type: 'STRING', description: 'YYYY-MM-DD' },
+            time: { type: 'STRING', description: 'HH:MM 24h' }
+          },
+          required: ['date','time']
+        }
+      }
+    },
+    required: ['title','description','participants','candidates']
+  };
+
+  const instruction = `あなたは日本語の会議・会食調整アシスタントです。現在時刻は ${nowText} です。タイムゾーンは Asia/Tokyo です。ユーザーの自然文を解釈し、予定作成フォームに流し込めるJSONのみを返してください。\n- 「来週の月曜」「夜」などの相対表現は絶対日時に変換する\n- 夜は原則 19:00、昼は 12:00、朝は 09:00、夕方は 18:00 とする\n- 候補日が1つしか明示されていない場合は、その1候補だけ返す\n- 参加者名は敬称込みで自然に抽出する\n- タイトルは簡潔で自然な日本語にする\n- 説明は1-2文の短い文にする\n- 不明な項目は空文字にする`;
+
+  try{
+    const res = await fetch(GEMINI_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': apiKey
+      },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: instruction }] },
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseMimeType: 'application/json',
+          responseSchema: schema,
+          temperature: 0.2
+        }
+      })
+    });
+    if(!res.ok){
+      const errText = await res.text();
+      throw new Error(errText || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const parsed = JSON.parse(stripJsonFence(rawText));
+    applyMagicSetup(parsed);
+    magicSetupPanel.classList.add('hidden');
+    setCompactStatus('AI流し込み完了', 'ok');
+  }catch(e){
+    console.error(e);
+    setCompactStatus('AI解析失敗', 'err');
+  }
+}
+
 function render(){ ensure(); renderEditor(); renderViewer(); applyScreenMode(screenMode); }
 
 focusCandidateBtn.onclick = () => d.focus();
@@ -388,6 +500,10 @@ editModeBtn.onclick = () => applyScreenMode('edit');
 viewerModeBtn.onclick = () => applyScreenMode('viewer');
 copyEditUrlBtn.onclick = () => copyText(buildUrl('edit'), '編集用URLをコピー');
 copyViewerUrlBtn.onclick = () => copyText(buildUrl('viewer'), '閲覧用URLをコピー');
+toggleMagicSetupBtn.onclick = () => magicSetupPanel.classList.toggle('hidden');
+closeMagicSetupBtn.onclick = () => magicSetupPanel.classList.add('hidden');
+runMagicSetupBtn.onclick = () => runMagicSetup();
+geminiApiKey.onchange = e => saveGeminiKey(e.target.value.trim());
 
 render();
 setCompactStatus('接続待機中', 'warn');
