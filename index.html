@@ -10,53 +10,66 @@
     body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Sans","Yu Gothic",sans-serif;color:var(--text);background:var(--bg)}
     .app{max-width:1200px;margin:0 auto;padding:16px}
     .panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:16px}
-    h1,h2{margin:0 0 8px}
+    h1,h2{margin:0 0 10px}
     .small{color:var(--sub);font-size:13px}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    input,select,textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px}
+    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+    input,select,textarea,button{font:inherit}
+    input,select,textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:#fff}
+    textarea{min-height:72px;resize:vertical}
+    .w320{max-width:320px}.w220{max-width:220px}.w160{max-width:160px}
     button{padding:10px 14px;border-radius:10px;border:none;background:var(--accent);color:#fff;cursor:pointer}
-    .ghost{background:#fff;color:#000;border:1px solid var(--line)}
     .danger{background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
+    .ghost{background:#fff;color:#111;border:1px solid var(--line)}
     table{width:100%;border-collapse:collapse}
-    th,td{border:1px solid #eee;padding:8px}
-    .ok{color:var(--ok)} .maybe{color:var(--maybe)} .ng{color:var(--ng)}
+    th,td{border:1px solid #eee;padding:8px;vertical-align:middle}
+    th{background:#fafafa}
+    .list-item{padding:8px 0;border-bottom:1px solid #f1f5f9}
+    .badge{display:inline-block;padding:2px 8px;border-radius:999px;background:#eef2ff;color:#3730a3;font-size:12px}
+    @media (max-width:700px){.w320,.w220,.w160{max-width:none}}
   </style>
 </head>
 <body>
 <div class="app">
   <div class="panel">
     <h1>調整様</h1>
-    <div class="small">Firestore対応版（簡易）</div>
+    <div class="small">ローカルで確実に動く版です。候補日追加・参加者追加・名前編集・回答集計がすべて動きます。</div>
   </div>
 
   <div class="panel">
     <h2>設定</h2>
-    <input id="eventTitle" placeholder="件名">
-    <textarea id="eventDescription"></textarea>
-    <select id="modeSelect">
-      <option value="important">偉い人優先</option>
-      <option value="flat">フラット</option>
-      <option value="organizer">幹事最適</option>
-    </select>
+    <div class="row"><input id="eventTitle" placeholder="件名" /></div>
+    <div class="row"><textarea id="eventDescription" placeholder="説明"></textarea></div>
+    <div class="row">
+      <select id="modeSelect" class="w220">
+        <option value="important">偉い人優先</option>
+        <option value="flat">フラット</option>
+        <option value="organizer">幹事最適</option>
+      </select>
+      <span class="badge" id="modeLabel">偉い人優先</span>
+    </div>
   </div>
 
   <div class="panel">
     <h2>候補日</h2>
-    <input type="date" id="newD">
-    <input type="time" id="newT">
-    <button id="addC">追加</button>
+    <div class="row">
+      <input type="date" id="newDate" class="w220" />
+      <input type="time" id="newTime" class="w160" value="18:00" />
+      <button id="addCandidateBtn" type="button">追加</button>
+    </div>
     <div id="candidateList"></div>
   </div>
 
   <div class="panel">
     <h2>参加者</h2>
-    <button id="addP">追加</button>
+    <div class="row">
+      <button id="addParticipantBtn" type="button">追加</button>
+    </div>
     <div id="participantList"></div>
   </div>
 
   <div class="panel">
     <h2>回答</h2>
-    <div id="table"></div>
+    <div id="tableWrap"></div>
   </div>
 
   <div class="panel">
@@ -66,129 +79,196 @@
 </div>
 
 <script>
-const state={title:'',desc:'',mode:'important',candidates:[],participants:[],responses:{}};
+  const state = {
+    title: '研究打ち合わせ',
+    desc: '候補日と参加者を入力してください。',
+    mode: 'important',
+    candidates: [
+      { id: uid(), date: '2026-03-30', time: '16:01' },
+      { id: uid(), date: '2026-03-30', time: '18:00' }
+    ],
+    participants: [
+      { id: uid(), name: '参加者1' },
+      { id: uid(), name: '参加者2' }
+    ],
+    responses: {}
+  };
 
-function uid(){return Math.random().toString(36).slice(2,9)}
+  function uid(){ return Math.random().toString(36).slice(2,9); }
+  function esc(s){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;'); }
 
-function ensureResponses(){
-  state.participants.forEach(p=>{
-    if(!state.responses[p.id]) state.responses[p.id]={};
-    state.candidates.forEach(c=>{
-      if(!state.responses[p.id][c.id]) state.responses[p.id][c.id]='maybe';
+  function ensureResponses(){
+    state.participants.forEach(p => {
+      if(!state.responses[p.id]) state.responses[p.id] = {};
+      state.candidates.forEach(c => {
+        if(!state.responses[p.id][c.id]) state.responses[p.id][c.id] = 'maybe';
+      });
+      Object.keys(state.responses[p.id]).forEach(cid => {
+        if(!state.candidates.some(c => c.id === cid)) delete state.responses[p.id][cid];
+      });
     });
-  });
-}
+    Object.keys(state.responses).forEach(pid => {
+      if(!state.participants.some(p => p.id === pid)) delete state.responses[pid];
+    });
+  }
 
-function render(){
-  ensureResponses();
-  renderCandidates();
-  renderParticipants();
-  renderTable();
-  renderResult();
-}
+  function render(){
+    ensureResponses();
+    document.getElementById('eventTitle').value = state.title;
+    document.getElementById('eventDescription').value = state.desc;
+    document.getElementById('modeSelect').value = state.mode;
+    document.getElementById('modeLabel').textContent = modeName(state.mode);
+    renderCandidates();
+    renderParticipants();
+    renderTable();
+    renderResult();
+  }
 
-function renderCandidates(){
-  const el=document.getElementById('candidateList'); el.innerHTML='';
-  state.candidates.forEach(c=>{
-    el.innerHTML+=`<div>${c.date} ${c.time}</div>`;
-  });
-}
+  function modeName(mode){
+    return { important:'偉い人優先', flat:'フラット', organizer:'幹事最適' }[mode] || mode;
+  }
 
-function renderParticipants(){
-  const el=document.getElementById('participantList'); el.innerHTML='';
-  state.participants.forEach((p, index)=>{
-    el.innerHTML+=`<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
-      <input value="${esc(p.name)}" data-pname="${p.id}" placeholder="参加者名を入力" style="max-width:320px;">
-      <button class="danger" data-pdel="${p.id}">削除</button>
-    </div>`;
-  });
+  function renderCandidates(){
+    const el = document.getElementById('candidateList');
+    el.innerHTML = '';
+    state.candidates.forEach((c, i) => {
+      const row = document.createElement('div');
+      row.className = 'row list-item';
+      row.innerHTML = `
+        <div style="flex:1;min-width:220px;">候補${i+1}: ${esc(c.date)} ${esc(c.time || '')}</div>
+        <button type="button" class="danger" data-candidate-del="${c.id}">削除</button>
+      `;
+      el.appendChild(row);
+    });
 
-  document.querySelectorAll('[data-pname]').forEach(input=>{
-    input.oninput=()=>{
-      const target=state.participants.find(p=>p.id===input.dataset.pname);
-      if(target){
-        target.name=input.value || '参加者';
-        renderTable();
+    document.querySelectorAll('[data-candidate-del]').forEach(btn => {
+      btn.onclick = () => {
+        if(state.candidates.length <= 1){ alert('候補日は最低1件必要です'); return; }
+        state.candidates = state.candidates.filter(c => c.id !== btn.dataset.candidateDel);
+        render();
+      };
+    });
+  }
+
+  function renderParticipants(){
+    const el = document.getElementById('participantList');
+    el.innerHTML = '';
+    state.participants.forEach((p, index) => {
+      const row = document.createElement('div');
+      row.className = 'row list-item';
+      row.innerHTML = `
+        <input class="w320" value="${esc(p.name)}" data-pname="${p.id}" placeholder="参加者名を入力" />
+        <span class="small">行 ${index + 1}</span>
+        <button type="button" class="danger" data-pdel="${p.id}">削除</button>
+      `;
+      el.appendChild(row);
+    });
+
+    document.querySelectorAll('[data-pname]').forEach(input => {
+      input.oninput = () => {
+        const target = state.participants.find(p => p.id === input.dataset.pname);
+        if(target){
+          target.name = input.value || '参加者';
+          renderTable();
+          renderResult();
+        }
+      };
+    });
+
+    document.querySelectorAll('[data-pdel]').forEach(btn => {
+      btn.onclick = () => {
+        if(state.participants.length <= 1){ alert('参加者は最低1人必要です'); return; }
+        state.participants = state.participants.filter(p => p.id !== btn.dataset.pdel);
+        delete state.responses[btn.dataset.pdel];
+        render();
+      };
+    });
+  }
+
+  function renderTable(){
+    const wrap = document.getElementById('tableWrap');
+    if(!state.candidates.length || !state.participants.length){
+      wrap.innerHTML = '<div class="small">候補日と参加者を追加してください。</div>';
+      return;
+    }
+
+    let html = '<table><thead><tr><th></th>';
+    state.candidates.forEach(c => {
+      html += `<th>${esc(c.date)}<br><span class="small">${esc(c.time || '')}</span></th>`;
+    });
+    html += '</tr></thead><tbody>';
+
+    state.participants.forEach(p => {
+      html += `<tr><td>${esc(p.name)}</td>`;
+      state.candidates.forEach(c => {
+        const v = state.responses[p.id][c.id];
+        html += `<td><select data-response="${p.id}|${c.id}">
+          <option value="ok" ${v === 'ok' ? 'selected' : ''}>○</option>
+          <option value="maybe" ${v === 'maybe' ? 'selected' : ''}>△</option>
+          <option value="ng" ${v === 'ng' ? 'selected' : ''}>×</option>
+        </select></td>`;
+      });
+      html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+
+    document.querySelectorAll('[data-response]').forEach(select => {
+      select.onchange = () => {
+        const [pid, cid] = select.dataset.response.split('|');
+        state.responses[pid][cid] = select.value;
         renderResult();
-      }
-    };
-  });
-
-  document.querySelectorAll('[data-pdel]').forEach(btn=>{
-    btn.onclick=()=>{
-      state.participants=state.participants.filter(p=>p.id!==btn.dataset.pdel);
-      delete state.responses[btn.dataset.pdel];
-      render();
-    };
-  });
-}</div>`;
-  });
-}
-
-function renderTable(){
-  let html='<table><tr><th></th>';
-  state.candidates.forEach(c=>html+=`<th>${c.date}<br><span class="small">${c.time || ''}</span></th>`);
-  html+='</tr>';
-  state.participants.forEach(p=>{
-    html+=`<tr><td>${p.name}</td>`;
-    state.candidates.forEach(c=>{
-      const v=state.responses[p.id][c.id];
-      html+=`<td><select data="${p.id}|${c.id}">
-        <option value="ok" ${v==='ok'?'selected':''}>○</option>
-        <option value="maybe" ${v==='maybe'?'selected':''}>△</option>
-        <option value="ng" ${v==='ng'?'selected':''}>×</option>
-      </select></td>`;
+      };
     });
-    html+='</tr>';
-  });
-  html+='</table>';
-  document.getElementById('table').innerHTML=html;
+  }
 
-  document.querySelectorAll('select[data]').forEach(s=>{
-    s.onchange=()=>{
-      const [pid,cid]=s.getAttribute('data').split('|');
-      state.responses[pid][cid]=s.value;
-      renderResult();
-    };
-  });
-}
-
-function renderResult(){
-  const res=state.candidates.map(c=>{
-    let score=0;
-    state.participants.forEach(p=>{
-      const v=state.responses[p.id][c.id];
-      if(v==='ok') score+=2;
-      if(v==='maybe') score+=1;
-      if(v==='ng') score-=2;
+  function scoreForCandidate(candidateId){
+    let score = 0;
+    state.participants.forEach((p, index) => {
+      const v = state.responses[p.id][candidateId];
+      const weight = state.mode === 'important' && index === 0 ? 2 : 1;
+      if(v === 'ok') score += 2 * weight;
+      if(v === 'maybe') score += 1 * weight;
+      if(v === 'ng') score -= 2 * weight;
+      if(state.mode === 'organizer' && v === 'ng') score -= 1;
     });
-    return {c,score};
-  }).sort((a,b)=>b.score-a.score);
+    return score;
+  }
 
-  if(!res.length) return;
-  document.getElementById('result').innerHTML=
-    `${res[0].c.date} が最も揉めにくいです (score:${res[0].score})`;
-}
+  function renderResult(){
+    const el = document.getElementById('result');
+    if(!state.candidates.length){
+      el.textContent = '候補日がありません。';
+      return;
+    }
 
-// events
-document.getElementById('addC').onclick=()=>{
-  const d=newD.value; const t=newT.value;
-  if(!d) return;
-  state.candidates.push({id:uid(),date:d,time:t});
+    const ranked = state.candidates
+      .map(c => ({ candidate: c, score: scoreForCandidate(c.id) }))
+      .sort((a, b) => b.score - a.score);
+
+    const top = ranked[0];
+    el.innerHTML = `${esc(top.candidate.date)} ${esc(top.candidate.time || '')} が最も揉めにくいです (score:${top.score})`;
+  }
+
+  document.getElementById('addCandidateBtn').onclick = () => {
+    const d = document.getElementById('newDate').value;
+    const t = document.getElementById('newTime').value || '18:00';
+    if(!d){ alert('日付を入力してください'); return; }
+    state.candidates.push({ id: uid(), date: d, time: t });
+    render();
+  };
+
+  document.getElementById('addParticipantBtn').onclick = () => {
+    state.participants.push({ id: uid(), name: `参加者${state.participants.length + 1}` });
+    render();
+  };
+
+  document.getElementById('eventTitle').oninput = e => { state.title = e.target.value; };
+  document.getElementById('eventDescription').oninput = e => { state.desc = e.target.value; };
+  document.getElementById('modeSelect').onchange = e => { state.mode = e.target.value; render(); };
+
   render();
-};
-
-document.getElementById('addP').onclick=()=>{
-  state.participants.push({id:uid(),name:'参加者'+(state.participants.length+1)});
-  render();
-};
-
-document.getElementById('modeSelect').onchange=e=>{
-  state.mode=e.target.value;
-  render();
-};
-
-render();
 </script>
 </body>
 </html>
