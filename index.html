@@ -1,209 +1,420 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<title>調整様</title>
-<style>
-body{font-family:sans-serif;padding:20px;background:#f5f7fb}
-.panel{background:#fff;padding:16px;margin-bottom:16px;border-radius:12px}
-button{padding:8px 12px;margin:4px;background:#2563eb;color:#fff;border:none;border-radius:6px}
-input,select{padding:6px}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>調整様｜誰も揉めない日程、出します</title>
+  <style>
+    :root{
+      --bg:#f3f6fb;--panel:#ffffff;--line:#d9e2ef;--text:#18212f;--sub:#667085;
+      --accent:#2563eb;--accent-soft:#e8f0ff;--danger:#b91c1c;--danger-bg:#fee2e2;
+      --ok:#16a34a;--maybe:#d97706;--ng:#dc2626;--radius:18px;--shadow:0 10px 28px rgba(15,23,42,.08)
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Sans","Yu Gothic",sans-serif;background:var(--bg);color:var(--text)}
+    .app{max-width:1280px;margin:0 auto;padding:20px}
+    .hero,.layout{display:grid;gap:18px}
+    .hero{grid-template-columns:1.2fr .8fr;margin-bottom:18px}
+    .layout{grid-template-columns:1.15fr .85fr}
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px}
+    h1,h2,h3{margin:0}
+    .eyebrow{display:inline-flex;align-items:center;gap:8px;background:var(--accent-soft);color:var(--accent);padding:8px 12px;border-radius:999px;font-size:13px;font-weight:700;margin-bottom:12px}
+    .hero h1{font-size:clamp(28px,4vw,42px);line-height:1.15;margin-bottom:10px}
+    .hero p,.sub{color:var(--sub);line-height:1.7}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
+    .stat{padding:14px;border-radius:14px;background:#f8fbff;border:1px solid var(--line)}
+    .stat strong{display:block;font-size:22px}.stat span{font-size:13px;color:var(--sub)}
+    .mode-box{padding:14px;border:1px solid var(--line);border-radius:14px;background:#fafcff;margin-bottom:12px}
+    .mode-box h3{font-size:16px;margin-bottom:6px}.mode-box p{margin:0;color:var(--sub);font-size:14px;line-height:1.6}
+    .section{margin-bottom:18px}
+    .section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+    .section-head p{margin:4px 0 0;color:var(--sub);font-size:14px}
+    .grid-2,.grid-3{display:grid;gap:12px}.grid-2{grid-template-columns:repeat(2,1fr)}.grid-3{grid-template-columns:repeat(3,1fr)}
+    .field{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+    label{font-weight:700;font-size:14px}
+    input,textarea,select,button{font:inherit}
+    input,textarea,select{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--text)}
+    textarea{min-height:90px;resize:vertical}
+    button{border:none;border-radius:12px;padding:11px 16px;font-weight:700;cursor:pointer}
+    .btn-primary{background:var(--accent);color:#fff}.btn-soft{background:#eef2ff;color:#3730a3}.btn-ghost{background:#fff;border:1px solid var(--line);color:var(--text)}.btn-danger{background:var(--danger-bg);border:1px solid #fecaca;color:var(--danger)}
+    .candidate-add{display:grid;grid-template-columns:1fr 180px auto;gap:10px;align-items:end}
+    .list{display:grid;gap:10px}.list-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fcfdff}
+    .list-item small{display:block;color:var(--sub);margin-top:4px}
+    .participant-row{display:grid;grid-template-columns:1fr 180px auto auto;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:#fcfdff}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#f1f5f9;border:1px solid #e2e8f0;font-size:12px;font-weight:700;color:#334155}
+    table{width:100%;border-collapse:collapse;border:1px solid var(--line);background:#fff;border-radius:16px;overflow:hidden}
+    th,td{border-bottom:1px solid #edf2f7;padding:10px;text-align:left;vertical-align:middle}
+    th{background:#f8fafc;font-size:13px}.small{color:var(--sub);font-size:13px}
+    .status-select{min-width:88px;padding:8px 10px}
+    .result-card{padding:16px;border-radius:14px;border:1px solid #bfdbfe;background:linear-gradient(180deg,#eff6ff 0%,#fff 100%)}
+    .ranking{display:grid;gap:10px}.rank{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fff}.rank.top{border:2px solid rgba(37,99,235,.25)}
+    .rank-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}.score{background:#eff6ff;color:#1d4ed8;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800}
+    .meta{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}.pill{padding:5px 8px;border-radius:999px;font-size:12px;font-weight:700}.ok{background:#dcfce7;color:#166534}.maybe{background:#ffedd5;color:#9a3412}.ng{background:#fee2e2;color:#991b1b}
+    .callout{padding:14px;border-radius:14px;background:#f8fafc;border:1px solid var(--line);line-height:1.7;color:#334155}
+    @media (max-width:1050px){.hero,.layout{grid-template-columns:1fr}}
+    @media (max-width:760px){.stats,.grid-2,.grid-3,.candidate-add,.participant-row{grid-template-columns:1fr}.app{padding:14px}table{display:block;overflow-x:auto}}
+  </style>
 </head>
 <body>
+<div class="app">
+  <section class="hero">
+    <div class="panel">
+      <div class="eyebrow">👑 調整様｜誰も揉めない日程、出します</div>
+      <h1>空気を読み、波風を避け、<br>穏当な日程をお告げします</h1>
+      <p>ただ候補を並べるだけではなく、予定名・場所・締切・参加者・回答状況をまとめて整理し、最も揉めにくい候補を出すプロトタイプです。</p>
+      <div class="stats">
+        <div class="stat"><strong id="statCandidates">0件</strong><span>候補日</span></div>
+        <div class="stat"><strong id="statParticipants">0人</strong><span>参加者</span></div>
+        <div class="stat"><strong id="statMode">偉い人優先</strong><span>裁定モード</span></div>
+        <div class="stat"><strong id="statBest">-</strong><span>第一候補</span></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="mode-box"><h3>⭐ 偉い人優先</h3><p>重要人物の都合を厚く尊重します。現実は現実として扱います。</p></div>
+      <div class="mode-box"><h3>⚖ フラット</h3><p>全員を平等に集計し、最も多くの人が無理なく参加できる日を優先します。</p></div>
+      <div class="mode-box"><h3>🧘 幹事最適</h3><p>確定しやすさと調整コストの低さを重視し、幹事の疲労を減らします。</p></div>
+    </div>
+  </section>
 
-<div class="panel">
-<h2>候補日</h2>
-<input type="date" id="newDate">
-<input type="time" id="newTime" value="18:00">
-<button id="addC">追加</button>
-<div id="candidateList"></div>
+  <div class="layout">
+    <main>
+      <section class="panel section">
+        <div class="section-head">
+          <div><h2>予定の基本情報</h2><p>まずは予定名や場所など、イベントの骨格を入力します。</p></div>
+          <span class="chip">必要情報を追加済み</span>
+        </div>
+        <div class="field">
+          <label for="eventTitle">予定名</label>
+          <input id="eventTitle" placeholder="例：研究打ち合わせ、歓迎会、定例会議" />
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="eventLocation">場所 / URL</label>
+            <input id="eventLocation" placeholder="例：会議室A、Zoom URL、仙台駅前" />
+          </div>
+          <div class="field">
+            <label for="deadline">回答締切</label>
+            <input id="deadline" type="datetime-local" />
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="organizerName">幹事名</label>
+            <input id="organizerName" placeholder="例：西浦" />
+          </div>
+          <div class="field">
+            <label for="modeSelect">裁定モード</label>
+            <select id="modeSelect">
+              <option value="important">偉い人優先</option>
+              <option value="flat">フラット</option>
+              <option value="organizer">幹事最適</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="eventDescription">予定の説明</label>
+          <textarea id="eventDescription" placeholder="目的、持ち物、注意事項など"></textarea>
+        </div>
+      </section>
+
+      <section class="panel section">
+        <div class="section-head">
+          <div><h2>候補日</h2><p>日付と時間を追加すると、回答表とランキングに反映されます。</p></div>
+          <button class="btn-soft" id="addCandidateBtn" type="button">＋ 候補日を追加</button>
+        </div>
+        <div class="candidate-add">
+          <div class="field" style="margin:0"><label for="newDate">日付</label><input type="date" id="newDate" /></div>
+          <div class="field" style="margin:0"><label for="newTime">時間</label><input type="time" id="newTime" value="18:00" /></div>
+          <button class="btn-primary" id="appendCandidateBtn" type="button">追加</button>
+        </div>
+        <div id="candidateList" class="list" style="margin-top:12px"></div>
+      </section>
+
+      <section class="panel section">
+        <div class="section-head">
+          <div><h2>参加者</h2><p>名前・役割・重要人物フラグを設定できます。</p></div>
+          <button class="btn-soft" id="addParticipantBtn" type="button">＋ 参加者を追加</button>
+        </div>
+        <div id="participantList" class="list"></div>
+      </section>
+
+      <section class="panel section">
+        <div class="section-head">
+          <div><h2>回答表</h2><p>○ / △ / × を入力すると、結果が自動更新されます。</p></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn-ghost" id="sampleBtn" type="button">見本を入れる</button>
+            <button class="btn-primary" id="rerenderBtn" type="button">再計算</button>
+          </div>
+        </div>
+        <div id="tableWrap"></div>
+      </section>
+    </main>
+
+    <aside>
+      <section class="panel section">
+        <div class="section-head"><div><h2>結果</h2><p>最も揉めにくい候補を表示します。</p></div></div>
+        <div id="resultCard" class="result-card"></div>
+      </section>
+
+      <section class="panel section">
+        <div class="section-head"><div><h2>ランキング</h2><p>各候補のスコアと理由です。</p></div></div>
+        <div id="ranking" class="ranking"></div>
+      </section>
+
+      <section class="panel section">
+        <div class="section-head"><div><h2>共有メモ</h2><p>本番版で追加したい機能の置き場です。</p></div></div>
+        <div class="callout">
+          ここから先は、Firestore保存、共有URL、回答者ごとのログイン、未回答者リマインドを足すと一気に実用品になります。
+        </div>
+      </section>
+    </aside>
+  </div>
 </div>
 
-<div class="panel">
-<h2>参加者</h2>
-<button id="addP">追加</button>
-<div id="participantList"></div>
-</div>
+<script>
+  const state = {
+    eventTitle: '研究打ち合わせ',
+    eventLocation: '会議室A / Zoom併用',
+    deadline: '2026-03-28T18:00',
+    organizerName: '西浦',
+    eventDescription: '新年度の研究計画と役割分担を決める予定です。',
+    mode: 'important',
+    candidates: [
+      { id: uid(), date: '2026-03-30', time: '18:00' },
+      { id: uid(), date: '2026-03-31', time: '10:00' }
+    ],
+    participants: [
+      { id: uid(), name: '西浦', role: '教授', important: true },
+      { id: uid(), name: '池田', role: '助教', important: false },
+      { id: uid(), name: '山田', role: '院生', important: false }
+    ],
+    responses: {}
+  };
 
-<div class="panel">
-<h2>回答</h2>
-<div id="table"></div>
-</div>
+  function uid(){ return Math.random().toString(36).slice(2,9); }
+  function esc(s){ return String(s ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;'); }
+  function modeName(mode){ return { important:'偉い人優先', flat:'フラット', organizer:'幹事最適' }[mode] || mode; }
+  function candidateLabel(c){ return `${c.date} ${c.time || ''}`.trim(); }
 
-<div class="panel">
-<h2>結果</h2>
-<div id="result"></div>
-</div>
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
-
-/* ===== Firebase設定 ===== */
-const firebaseConfig = {
-  apiKey: "ここに貼る",
-  authDomain: "ここに貼る",
-  projectId: "ここに貼る",
-  storageBucket: "ここに貼る",
-  messagingSenderId: "ここに貼る",
-  appId: "ここに貼る"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-/* ===== state ===== */
-const state = {
-  candidates: [],
-  participants: [],
-  responses: {}
-};
-
-function uid(){ return Math.random().toString(36).slice(2,9); }
-
-/* ===== eventId ===== */
-function getEventId(){
-  const url = new URL(location.href);
-  let id = url.searchParams.get("event");
-  if(!id){
-    id = Math.random().toString(36).slice(2);
-    url.searchParams.set("event", id);
-    location.href = url.toString();
+  function ensureResponses(){
+    state.participants.forEach((p,pi)=>{
+      if(!state.responses[p.id]) state.responses[p.id] = {};
+      state.candidates.forEach((c,ci)=>{
+        if(!state.responses[p.id][c.id]){
+          const seed = (pi + ci) % 3;
+          state.responses[p.id][c.id] = seed === 0 ? 'ok' : seed === 1 ? 'maybe' : 'ng';
+        }
+      });
+      Object.keys(state.responses[p.id]).forEach(cid => {
+        if(!state.candidates.some(c => c.id === cid)) delete state.responses[p.id][cid];
+      });
+    });
+    Object.keys(state.responses).forEach(pid => {
+      if(!state.participants.some(p => p.id === pid)) delete state.responses[pid];
+    });
   }
-  return id;
-}
-const eventId = getEventId();
 
-/* ===== Firestore ===== */
-async function save(){
-  await setDoc(doc(db,"events",eventId), state);
-}
+  function render(){
+    ensureResponses();
+    eventTitle.value = state.eventTitle;
+    eventLocation.value = state.eventLocation;
+    deadline.value = state.deadline;
+    organizerName.value = state.organizerName;
+    eventDescription.value = state.eventDescription;
+    modeSelect.value = state.mode;
+    renderCandidates();
+    renderParticipants();
+    renderTable();
+    renderResults();
+    renderStats();
+  }
 
-async function load(){
-  const snap = await getDoc(doc(db,"events",eventId));
-  if(snap.exists()){
-    Object.assign(state, snap.data());
+  function renderStats(){
+    statCandidates.textContent = `${state.candidates.length}件`;
+    statParticipants.textContent = `${state.participants.length}人`;
+    statMode.textContent = modeName(state.mode);
+    const top = calculateRanking()[0];
+    statBest.textContent = top ? (top.candidate.time || top.candidate.date) : '-';
+  }
+
+  function renderCandidates(){
+    candidateList.innerHTML = '';
+    state.candidates.forEach((c, index) => {
+      const row = document.createElement('div');
+      row.className = 'list-item';
+      row.innerHTML = `
+        <div>
+          <strong>候補${index + 1}: ${esc(candidateLabel(c))}</strong>
+          <small>回答表と結果に反映中</small>
+        </div>
+        <button class="btn-danger" type="button" data-cdel="${c.id}">削除</button>
+      `;
+      candidateList.appendChild(row);
+    });
+    document.querySelectorAll('[data-cdel]').forEach(btn => {
+      btn.onclick = () => {
+        if(state.candidates.length <= 1) return alert('候補日は最低1件必要です');
+        state.candidates = state.candidates.filter(c => c.id !== btn.dataset.cdel);
+        render();
+      };
+    });
+  }
+
+  function renderParticipants(){
+    participantList.innerHTML = '';
+    state.participants.forEach((p, index) => {
+      const row = document.createElement('div');
+      row.className = 'participant-row';
+      row.innerHTML = `
+        <input value="${esc(p.name)}" data-pname="${p.id}" placeholder="参加者名" />
+        <input value="${esc(p.role)}" data-prole="${p.id}" placeholder="役割" />
+        <label class="chip"><input type="checkbox" data-pimp="${p.id}" ${p.important ? 'checked' : ''}> 重要人物</label>
+        <button class="btn-danger" type="button" data-pdel="${p.id}">削除</button>
+      `;
+      participantList.appendChild(row);
+    });
+    document.querySelectorAll('[data-pname]').forEach(input => {
+      input.oninput = () => {
+        const t = state.participants.find(p => p.id === input.dataset.pname);
+        if(t){ t.name = input.value || '参加者'; renderTable(); renderResults(); }
+      };
+    });
+    document.querySelectorAll('[data-prole]').forEach(input => {
+      input.oninput = () => {
+        const t = state.participants.find(p => p.id === input.dataset.prole);
+        if(t){ t.role = input.value; renderResults(); }
+      };
+    });
+    document.querySelectorAll('[data-pimp]').forEach(input => {
+      input.onchange = () => {
+        const t = state.participants.find(p => p.id === input.dataset.pimp);
+        if(t){ t.important = input.checked; renderResults(); renderStats(); }
+      };
+    });
+    document.querySelectorAll('[data-pdel]').forEach(btn => {
+      btn.onclick = () => {
+        if(state.participants.length <= 1) return alert('参加者は最低1人必要です');
+        state.participants = state.participants.filter(p => p.id !== btn.dataset.pdel);
+        delete state.responses[btn.dataset.pdel];
+        render();
+      };
+    });
+  }
+
+  function renderTable(){
+    if(!state.candidates.length || !state.participants.length){
+      tableWrap.innerHTML = '<div class="small">候補日と参加者を追加してください。</div>';
+      return;
+    }
+    let html = '<table><thead><tr><th>参加者</th>';
+    state.candidates.forEach(c => {
+      html += `<th>${esc(c.date)}<br><span class="small">${esc(c.time || '')}</span></th>`;
+    });
+    html += '</tr></thead><tbody>';
+    state.participants.forEach(p => {
+      html += `<tr><td><strong>${esc(p.name)}</strong><br><span class="small">${esc(p.role || '役割未設定')}</span>${p.important ? ' <span class="chip">重要</span>' : ''}</td>`;
+      state.candidates.forEach(c => {
+        const v = state.responses[p.id][c.id];
+        html += `<td><select class="status-select" data-r="${p.id}|${c.id}">
+          <option value="ok" ${v === 'ok' ? 'selected' : ''}>○</option>
+          <option value="maybe" ${v === 'maybe' ? 'selected' : ''}>△</option>
+          <option value="ng" ${v === 'ng' ? 'selected' : ''}>×</option>
+        </select></td>`;
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    tableWrap.innerHTML = html;
+    document.querySelectorAll('[data-r]').forEach(select => {
+      select.onchange = () => {
+        const [pid, cid] = select.dataset.r.split('|');
+        state.responses[pid][cid] = select.value;
+        renderResults();
+      };
+    });
+  }
+
+  function calculateRanking(){
+    return state.candidates.map(candidate => {
+      let score = 0, ok = 0, maybe = 0, ng = 0, importantOk = 0, importantNg = 0;
+      state.participants.forEach((p, index) => {
+        const v = state.responses[p.id][candidate.id];
+        const weight = state.mode === 'important' ? (p.important ? 3 : 1) : 1;
+        if(v === 'ok'){ score += 2 * weight; ok++; if(p.important) importantOk++; }
+        if(v === 'maybe'){ score += 1 * weight; maybe++; }
+        if(v === 'ng'){ score -= 2 * weight; ng++; if(p.important) importantNg++; }
+        if(state.mode === 'organizer' && v === 'ng') score -= 1;
+        if(state.mode === 'flat' && v === 'ok') score += 0.5;
+      });
+      const reason = buildReason({ ok, maybe, ng, importantOk, importantNg, candidate });
+      return { candidate, score, ok, maybe, ng, importantOk, importantNg, reason };
+    }).sort((a,b) => b.score - a.score);
+  }
+
+  function buildReason(r){
+    const lines = [];
+    lines.push(`${modeName(state.mode)}モードで集計。○${r.ok} / △${r.maybe} / ×${r.ng}。`);
+    if(state.mode === 'important' && r.importantOk > 0) lines.push(`重要人物 ${r.importantOk}人が参加可能です。`);
+    if(state.mode === 'important' && r.importantNg > 0) lines.push(`重要人物 ${r.importantNg}人が参加不可で減点されています。`);
+    if(state.mode === 'organizer' && r.ng === 0) lines.push('幹事にやさしい候補です。');
+    if(r.ok === state.participants.length) lines.push('全員OKです。希少事象です。');
+    else if(r.maybe >= Math.max(2, Math.ceil(state.participants.length / 2))) lines.push('△多め。みなさんやんわり頑張ろうとしています。');
+    else if(r.ng >= 2) lines.push('少し荒れそうです。別案提示も視野です。');
+    else lines.push('大きな波風は立ちにくそうです。');
+    return lines.join(' ');
+  }
+
+  function renderResults(){
+    const rankingData = calculateRanking();
+    const top = rankingData[0];
+    if(!top){
+      resultCard.innerHTML = '候補日がありません。';
+      ranking.innerHTML = '';
+      return;
+    }
+    resultCard.innerHTML = `
+      <strong style="display:block;font-size:20px;margin-bottom:8px;">${esc(state.eventTitle || '予定名未設定')}</strong>
+      <div class="sub" style="margin-bottom:10px;">場所: ${esc(state.eventLocation || '未設定')} / 締切: ${esc(state.deadline || '未設定')}</div>
+      <div style="font-size:18px;font-weight:800;margin-bottom:8px;">第一候補: ${esc(candidateLabel(top.candidate))}</div>
+      <div class="sub">${esc(top.reason)}</div>
+    `;
+    ranking.innerHTML = '';
+    rankingData.forEach((item, index) => {
+      const el = document.createElement('div');
+      el.className = `rank ${index === 0 ? 'top' : ''}`;
+      el.innerHTML = `
+        <div class="rank-head"><div><strong>${index === 0 ? '👑 第一候補' : `候補 ${index + 1}`}</strong><div class="small">${esc(candidateLabel(item.candidate))}</div></div><div class="score">Score ${item.score}</div></div>
+        <div class="meta"><span class="pill ok">○ ${item.ok}</span><span class="pill maybe">△ ${item.maybe}</span><span class="pill ng">× ${item.ng}</span></div>
+        <div class="small">${esc(item.reason)}</div>
+      `;
+      ranking.appendChild(el);
+    });
+    renderStats();
+  }
+
+  appendCandidateBtn.onclick = () => {
+    const date = newDate.value;
+    const time = newTime.value || '18:00';
+    if(!date) return alert('日付を入力してください');
+    state.candidates.push({ id: uid(), date, time });
     render();
-  }
-}
+  };
+  addCandidateBtn.onclick = () => newDate.focus();
+  addParticipantBtn.onclick = () => {
+    state.participants.push({ id: uid(), name: `参加者${state.participants.length + 1}`, role: '', important: false });
+    render();
+  };
+  sampleBtn.onclick = () => { state.responses = {}; ensureResponses(); render(); };
+  rerenderBtn.onclick = () => render();
 
-/* ===== ロジック ===== */
-function ensure(){
-  state.participants.forEach(p=>{
-    if(!state.responses[p.id]) state.responses[p.id]={};
-    state.candidates.forEach(c=>{
-      if(!state.responses[p.id][c.id]) state.responses[p.id][c.id]='maybe';
-    });
-  });
-}
+  eventTitle.oninput = e => { state.eventTitle = e.target.value; renderResults(); };
+  eventLocation.oninput = e => { state.eventLocation = e.target.value; renderResults(); };
+  deadline.oninput = e => { state.deadline = e.target.value; renderResults(); };
+  organizerName.oninput = e => { state.organizerName = e.target.value; };
+  eventDescription.oninput = e => { state.eventDescription = e.target.value; };
+  modeSelect.onchange = e => { state.mode = e.target.value; renderResults(); renderStats(); };
 
-/* ===== render ===== */
-function render(){
-  ensure();
-
-  // 候補日
-  let chtml='';
-  state.candidates.forEach(c=>{
-    chtml += `<div>${c.date} ${c.time}</div>`;
-  });
-  candidateList.innerHTML = chtml;
-
-  // 参加者
-  let phtml='';
-  state.participants.forEach(p=>{
-    phtml += `<div>
-      <input value="${p.name}" data-id="${p.id}">
-    </div>`;
-  });
-  participantList.innerHTML = phtml;
-
-  document.querySelectorAll('[data-id]').forEach(input=>{
-    input.oninput=()=>{
-      const t=state.participants.find(p=>p.id===input.dataset.id);
-      t.name=input.value;
-      renderTable();
-      renderResult();
-      save();
-    }
-  });
-
-  renderTable();
-  renderResult();
-}
-
-/* ===== table ===== */
-function renderTable(){
-  let html='<table border="1"><tr><th></th>';
-  state.candidates.forEach(c=>{
-    html+=`<th>${c.date}<br>${c.time}</th>`;
-  });
-  html+='</tr>';
-
-  state.participants.forEach(p=>{
-    html+=`<tr><td>${p.name}</td>`;
-    state.candidates.forEach(c=>{
-      const v=state.responses[p.id][c.id];
-      html+=`<td><select data="${p.id}|${c.id}">
-        <option value="ok" ${v==='ok'?'selected':''}>○</option>
-        <option value="maybe" ${v==='maybe'?'selected':''}>△</option>
-        <option value="ng" ${v==='ng'?'selected':''}>×</option>
-      </select></td>`;
-    });
-    html+='</tr>';
-  });
-  html+='</table>';
-
-  table.innerHTML=html;
-
-  document.querySelectorAll('select[data]').forEach(s=>{
-    s.onchange=()=>{
-      const [pid,cid]=s.getAttribute('data').split('|');
-      state.responses[pid][cid]=s.value;
-      renderResult();
-      save();
-    }
-  });
-}
-
-/* ===== result ===== */
-function renderResult(){
-  const res=state.candidates.map(c=>{
-    let score=0;
-    state.participants.forEach(p=>{
-      const v=state.responses[p.id][c.id];
-      if(v==='ok') score+=2;
-      if(v==='maybe') score+=1;
-      if(v==='ng') score-=2;
-    });
-    return {c,score};
-  }).sort((a,b)=>b.score-a.score);
-
-  if(res.length){
-    result.innerHTML = `${res[0].c.date} ${res[0].c.time} が最適 (score:${res[0].score})`;
-  }
-}
-
-/* ===== イベント ===== */
-addC.onclick=()=>{
-  const d=newDate.value;
-  const t=newTime.value;
-  if(!d) return;
-  state.candidates.push({id:uid(),date:d,time:t});
   render();
-  save();
-};
-
-addP.onclick=()=>{
-  state.participants.push({id:uid(),name:"参加者"});
-  render();
-  save();
-};
-
-/* ===== 起動 ===== */
-load();
-render();
-
 </script>
 </body>
 </html>
